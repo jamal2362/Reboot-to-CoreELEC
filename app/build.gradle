@@ -14,6 +14,8 @@ android {
         targetSdk 34
         versionCode 10
         versionName "1.0"
+        resConfigs 'en', 'de'
+        setProperty('archivesBaseName', 'Reboot_to_CoreELEC_' + versionName)
     }
 
     buildTypes {
