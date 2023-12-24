@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Neustart zu CoreELEC</string>
+    <string name="ip">127.0.0.1</string>
+    <string name="allow_usb_debugging_dialog">Das Dialogfeld für USB-Debugging bitte zulassen</string>
+    <string name="enable_usb_debugging_first">Aktiviere USB-Debugging in den Entwickleroptionen</string>
+    <string name="rebooting_to_coreelec">Neustart zu CoreELEC</string>
+</resources>
