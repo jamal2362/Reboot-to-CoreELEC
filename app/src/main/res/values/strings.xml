@@ -3,6 +3,7 @@
     <string name="app_name">Reboot to CoreELEC</string>
     <string name="ip">127.0.0.1</string>
     <string name="allow_usb_debugging_dialog">Please allow the dialog box for USB debugging</string>
-    <string name="enable_usb_debugging_first">Enable USB debugging in the developer options</string>
-    <string name="rebooting_to_coreelec">Rebooting to CoreELEC</string>
+    <string name="enable_usb_debugging_first">Enable USB debugging first in the developer options</string>
+    <string name="reboot_to_coreelec">Normal restart to CoreELEC</string>
+    <string name="first_reboot_to_coreelec">First restart to CoreELEC</string>
 </resources>

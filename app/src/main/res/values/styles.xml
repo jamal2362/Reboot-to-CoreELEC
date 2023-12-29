@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-        <style name="AppTheme" parent="@style/Theme.Material3.Dark.NoActionBar"></style>
+    <style name="AppTheme" parent="@style/Theme.Material3.Dark.NoActionBar">
+        <item name="colorPrimary">#E0E0E0</item>
+    </style>
 </resources>

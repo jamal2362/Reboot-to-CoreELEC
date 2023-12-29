@@ -1,40 +1,55 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:orientation="horizontal"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:gravity="center"
     android:background="#171620">
 
     <ImageView
         android:layout_width="45.54593dp"
         android:layout_height="50dp"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginStart="80dp"
-        android:layout_marginBottom="45dp"
         android:background="@drawable/coreelec"
         android:contentDescription="@null" />
 
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentBottom="true"
-        android:layout_marginStart="15dp"
-        android:layout_marginBottom="10dp"
         android:text="@string/app_name"
         android:textSize="20sp"
-        android:textStyle="bold" />
+        android:textStyle="bold"
+        android:layout_marginTop="10dp" />
 
     <TextView
         android:id="@+id/ip"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignParentStart="true"
-        android:layout_alignParentTop="true"
-        android:layout_marginStart="15dp"
-        android:layout_marginTop="10dp"
         android:text="@string/ip"
         android:textSize="20sp"
-        android:textStyle="bold" />
-</RelativeLayout>
+        android:textStyle="bold"
+        android:layout_marginTop="10dp" />
+
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/btnRebootUpdate"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/first_reboot_to_coreelec"
+        android:textAllCaps="true"
+        app:strokeColor="#E0E0E0"
+        app:strokeWidth="2dp"
+        android:layout_marginTop="40dp" />
+
+    <Button
+        android:id="@+id/btnReboot"
+        style="@style/Widget.Material3.Button.OutlinedButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/reboot_to_coreelec"
+        android:textAllCaps="true"
+        app:strokeColor="#E0E0E0"
+        app:strokeWidth="2dp"
+        android:layout_marginTop="10dp" />
+
+</LinearLayout>
