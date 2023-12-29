@@ -37,11 +37,11 @@ class MainActivity : AppCompatActivity() {
         tvIP = findViewById(R.id.ip)
         tvIP?.text = NetworkUtil.getGateWayIp(this)
 
-        findViewById<Button>(R.id.btnRebootUpdate).setOnClickListener {
+        findViewById<Button>(R.id.btnReboot).setOnClickListener {
             onKeyCE(10)
         }
 
-        findViewById<Button>(R.id.btnReboot).setOnClickListener {
+        findViewById<Button>(R.id.btnRebootUpdate).setOnClickListener {
             onKeyCE(20)
         }
     }
@@ -70,18 +70,18 @@ class MainActivity : AppCompatActivity() {
             when (case) {
                 10 -> {
                     runOnUiThread {
-                        Toast.makeText(this, getString(R.string.first_reboot_to_coreelec), Toast.LENGTH_SHORT).show()
-                    }
-                    Thread.sleep(1500)
-                    stream = connection?.open("shell:reboot update")
-                    Log.d("MainActivity", "Case 10 executed")
-                }
-                20 -> {
-                    runOnUiThread {
                         Toast.makeText(this, getString(R.string.reboot_to_coreelec), Toast.LENGTH_SHORT).show()
                     }
                     Thread.sleep(1500)
                     stream = connection?.open("shell:reboot")
+                    Log.d("MainActivity", "Case 10 executed")
+                }
+                20 -> {
+                    runOnUiThread {
+                        Toast.makeText(this, getString(R.string.first_reboot_to_coreelec), Toast.LENGTH_SHORT).show()
+                    }
+                    Thread.sleep(1500)
+                    stream = connection?.open("shell:reboot update")
                     Log.d("MainActivity", "Case 20 executed")
                 }
             }

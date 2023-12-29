@@ -31,22 +31,22 @@
         android:layout_marginTop="10dp" />
 
     <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnRebootUpdate"
+        android:id="@+id/btnReboot"
         style="@style/Widget.Material3.Button.OutlinedButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/first_reboot_to_coreelec"
+        android:text="@string/reboot_to_coreelec"
         android:textAllCaps="true"
         app:strokeColor="#E0E0E0"
         app:strokeWidth="2dp"
         android:layout_marginTop="40dp" />
 
     <Button
-        android:id="@+id/btnReboot"
+        android:id="@+id/btnRebootUpdate"
         style="@style/Widget.Material3.Button.OutlinedButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/reboot_to_coreelec"
+        android:text="@string/first_reboot_to_coreelec"
         android:textAllCaps="true"
         app:strokeColor="#E0E0E0"
         app:strokeWidth="2dp"
