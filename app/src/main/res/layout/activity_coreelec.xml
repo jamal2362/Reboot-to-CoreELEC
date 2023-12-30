@@ -1,15 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:orientation="vertical"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center"
-    android:background="#171620">
+    android:gravity="center">
 
     <ImageView
-        android:layout_width="45.54593dp"
-        android:layout_height="50dp"
+        android:layout_width="64dp"
+        android:layout_height="64dp"
         android:background="@drawable/coreelec"
         android:contentDescription="@null" />
 
@@ -18,6 +16,7 @@
         android:layout_height="wrap_content"
         android:text="@string/app_name"
         android:textSize="20sp"
+        android:textColor="#ECECEC"
         android:textStyle="bold"
         android:layout_marginTop="10dp" />
 
@@ -27,29 +26,62 @@
         android:layout_height="wrap_content"
         android:text="@string/ip"
         android:textSize="20sp"
+        android:textColor="#ECECEC"
         android:textStyle="bold"
         android:layout_marginTop="10dp" />
 
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/btnReboot"
-        style="@style/Widget.Material3.Button.OutlinedButton"
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/reboot_to_coreelec"
-        android:textAllCaps="true"
-        app:strokeColor="#E0E0E0"
-        app:strokeWidth="2dp"
-        android:layout_marginTop="40dp" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="25dp">
 
-    <Button
-        android:id="@+id/btnRebootUpdate"
-        style="@style/Widget.Material3.Button.OutlinedButton"
+        <Button
+            android:id="@+id/btnReboot"
+            android:layout_width="270dp"
+            android:layout_height="match_parent"
+            android:text="@string/reboot_to_coreelec"
+            android:textAllCaps="true"
+            android:textColor="#ECECEC"
+            android:background="@drawable/button_background" />
+
+        <ImageButton
+            android:id="@+id/btnRebootInfo"
+            android:layout_width="46dp"
+            android:layout_height="46dp"
+            android:layout_marginStart="5dp"
+            android:src="@drawable/ic_info_24"
+            android:background="@drawable/button_background"
+            android:contentDescription="@null" />
+
+    </LinearLayout>
+
+    <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/first_reboot_to_coreelec"
-        android:textAllCaps="true"
-        app:strokeColor="#E0E0E0"
-        app:strokeWidth="2dp"
-        android:layout_marginTop="10dp" />
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+        android:layout_marginTop="20dp">
+
+        <Button
+            android:id="@+id/btnRebootUpdate"
+            android:layout_width="270dp"
+            android:layout_height="match_parent"
+            android:text="@string/first_reboot_to_coreelec"
+            android:textAllCaps="true"
+            android:textColor="#ECECEC"
+            android:background="@drawable/button_background" />
+
+        <ImageButton
+            android:id="@+id/btnRebootUpdateInfo"
+            android:layout_width="46dp"
+            android:layout_height="46dp"
+            android:layout_marginStart="5dp"
+            android:src="@drawable/ic_info_24"
+            android:background="@drawable/button_background"
+            android:contentDescription="@null" />
+
+    </LinearLayout>
 
 </LinearLayout>
