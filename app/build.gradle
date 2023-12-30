@@ -10,7 +10,7 @@ android {
 
     defaultConfig {
         applicationId 'com.jamal2367.coreelec'
-        minSdkVersion 21
+        minSdkVersion 24
         targetSdk 34
         versionCode 20
         versionName "2.0"

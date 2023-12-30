@@ -1,18 +1,22 @@
 package com.jamal2367.coreelec
 
 import android.app.Activity
+import android.app.AlertDialog
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
+import android.text.Html
+import android.text.Html.FROM_HTML_MODE_LEGACY
 import android.util.Log
 import android.widget.Button
+import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
+import com.jamal2367.coreelec.utils.AndroidBase64
+import com.jamal2367.coreelec.utils.NetworkUtil
 import com.tananaev.adblib.AdbConnection
 import com.tananaev.adblib.AdbCrypto
 import com.tananaev.adblib.AdbStream
-import com.jamal2367.coreelec.utils.AndroidBase64
-import com.jamal2367.coreelec.utils.NetworkUtil
 import java.lang.ref.WeakReference
 import java.net.Socket
 
@@ -44,6 +48,27 @@ class MainActivity : Activity() {
         findViewById<Button>(R.id.btnRebootUpdate).setOnClickListener {
             onKeyCE(20)
         }
+
+        findViewById<ImageButton>(R.id.btnRebootInfo).setOnClickListener {
+            val builder = AlertDialog.Builder(this)
+
+            builder.setTitle(R.string.information)
+            builder.setMessage(Html.fromHtml(getString(R.string.reboot_to_coreelec_info), FROM_HTML_MODE_LEGACY)
+            )
+
+            val dialog: AlertDialog = builder.create()
+            dialog.show()
+        }
+
+        findViewById<ImageButton>(R.id.btnRebootUpdateInfo).setOnClickListener {
+            val builder = AlertDialog.Builder(this)
+
+            builder.setTitle(R.string.information)
+            builder.setMessage(Html.fromHtml(getString(R.string.first_reboot_to_coreelec_info), FROM_HTML_MODE_LEGACY))
+
+            val dialog: AlertDialog = builder.create()
+            dialog.show()
+        }
     }
 
     private fun onKeyCE(case: Int) {
@@ -70,7 +95,7 @@ class MainActivity : Activity() {
             when (case) {
                 10 -> {
                     runOnUiThread {
-                        Toast.makeText(this, getString(R.string.reboot_to_coreelec), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, getString(R.string.reboot_to_coreelec) + "...", Toast.LENGTH_SHORT).show()
                     }
                     Thread.sleep(1500)
                     stream = connection?.open("shell:reboot")
@@ -78,7 +103,7 @@ class MainActivity : Activity() {
                 }
                 20 -> {
                     runOnUiThread {
-                        Toast.makeText(this, getString(R.string.first_reboot_to_coreelec), Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this, getString(R.string.first_reboot_to_coreelec) + "...", Toast.LENGTH_SHORT).show()
                     }
                     Thread.sleep(1500)
                     stream = connection?.open("shell:reboot update")
