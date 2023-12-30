@@ -1,5 +1,6 @@
 package com.jamal2367.coreelec
 
+import android.app.Activity
 import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
@@ -7,7 +8,6 @@ import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 import com.tananaev.adblib.AdbConnection
 import com.tananaev.adblib.AdbCrypto
 import com.tananaev.adblib.AdbStream
@@ -16,7 +16,7 @@ import com.jamal2367.coreelec.utils.NetworkUtil
 import java.lang.ref.WeakReference
 import java.net.Socket
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : Activity() {
 
     private var tvIP: TextView? = null
     private var connection: AdbConnection? = null

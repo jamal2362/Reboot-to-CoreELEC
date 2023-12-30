@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="AppTheme" parent="@style/Theme.Material3.Dark.NoActionBar">
-        <item name="colorPrimary">#E0E0E0</item>
+    <style name="AppTheme" parent="android:Theme.Material.NoActionBar">
+        <item name="android:background">#161820</item>
     </style>
 </resources>
