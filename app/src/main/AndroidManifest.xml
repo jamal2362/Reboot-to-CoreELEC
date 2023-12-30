@@ -15,12 +15,10 @@
 
     <application android:theme="@style/AppTheme"
         android:label="@string/app_name"
-        android:icon="@drawable/coreelec"
+        android:icon="@mipmap/ic_launcher"
         android:allowBackup="true"
         android:supportsRtl="true"
-        android:banner="@drawable/coreelec_leanback"
-        android:roundIcon="@drawable/coreelec"
-        android:requestLegacyExternalStorage="true">
+        android:banner="@mipmap/ic_banner">
 
         <activity
             android:name="com.jamal2367.coreelec.MainActivity"
