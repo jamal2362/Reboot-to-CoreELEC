@@ -2,18 +2,21 @@ package com.jamal2367.coreelec
 
 import android.app.Activity
 import android.app.AlertDialog
+import android.content.Context
 import android.content.Intent
+import android.net.wifi.WifiInfo
+import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.provider.Settings
 import android.text.Html
 import android.text.Html.FROM_HTML_MODE_LEGACY
+import android.util.Base64
 import android.util.Log
 import android.widget.Button
 import android.widget.ImageButton
 import android.widget.TextView
 import android.widget.Toast
-import com.jamal2367.coreelec.utils.AndroidBase64
-import com.jamal2367.coreelec.utils.NetworkUtil
+import com.tananaev.adblib.AdbBase64
 import com.tananaev.adblib.AdbConnection
 import com.tananaev.adblib.AdbCrypto
 import com.tananaev.adblib.AdbStream
@@ -39,7 +42,7 @@ class MainActivity : Activity() {
         }
 
         tvIP = findViewById(R.id.ip)
-        tvIP?.text = NetworkUtil.getGateWayIp(this)
+        tvIP?.text = getIPAddress(this)
 
         findViewById<Button>(R.id.btnReboot).setOnClickListener {
             onKeyCE(10)
@@ -125,6 +128,21 @@ class MainActivity : Activity() {
         return Settings.Global.getInt(contentResolver, Settings.Global.ADB_ENABLED, 0) == 1
     }
 
+    @Suppress("DEPRECATION")
+    private fun getIPAddress(context: Context): String {
+        val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+        val wifiInfo: WifiInfo = wifiManager.connectionInfo
+        val ip = wifiInfo.ipAddress
+
+        return String.format(
+            "%d.%d.%d.%d",
+            ip and 0xff,
+            ip shr 8 and 0xff,
+            ip shr 16 and 0xff,
+            ip shr 24 and 0xff
+        )
+    }
+
     class MyAsyncTask internal constructor(context: MainActivity) {
         private val activityReference: WeakReference<MainActivity> = WeakReference(context)
         private var thread: Thread? = null
@@ -143,6 +161,12 @@ class MainActivity : Activity() {
 
         fun cancel() {
             thread?.interrupt()
+        }
+    }
+
+    class AndroidBase64 : AdbBase64 {
+        override fun encodeToString(bArr: ByteArray): String {
+            return Base64.encodeToString(bArr, Base64.NO_WRAP)
         }
     }
 }
