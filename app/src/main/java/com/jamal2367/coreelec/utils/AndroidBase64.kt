@@ -5,6 +5,6 @@ import com.tananaev.adblib.AdbBase64
 
 class AndroidBase64 : AdbBase64 {
     override fun encodeToString(bArr: ByteArray): String {
-        return Base64.encodeToString(bArr, 2)
+        return Base64.encodeToString(bArr, Base64.NO_WRAP)
     }
 }
