@@ -4,7 +4,7 @@ import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
-import android.net.wifi.WifiInfo
+import android.net.DhcpInfo
 import android.net.wifi.WifiManager
 import android.os.Bundle
 import android.provider.Settings
@@ -21,7 +21,11 @@ import com.tananaev.adblib.AdbConnection
 import com.tananaev.adblib.AdbCrypto
 import com.tananaev.adblib.AdbStream
 import java.lang.ref.WeakReference
+import java.net.Inet4Address
+import java.net.NetworkInterface
 import java.net.Socket
+import java.net.SocketException
+import java.nio.ByteOrder
 
 class MainActivity : Activity() {
 
@@ -42,7 +46,7 @@ class MainActivity : Activity() {
         }
 
         tvIP = findViewById(R.id.ip)
-        tvIP?.text = getIPAddress(this)
+        tvIP?.text = getGateWayIp(this)
 
         findViewById<Button>(R.id.btnReboot).setOnClickListener {
             onKeyCE(10)
@@ -128,19 +132,52 @@ class MainActivity : Activity() {
         return Settings.Global.getInt(contentResolver, Settings.Global.ADB_ENABLED, 0) == 1
     }
 
-    @Suppress("DEPRECATION")
-    private fun getIPAddress(context: Context): String {
-        val wifiManager = context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-        val wifiInfo: WifiInfo = wifiManager.connectionInfo
-        val ip = wifiInfo.ipAddress
+    private fun getWifiManager(context: Context): WifiManager {
+        return context.applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+    }
 
-        return String.format(
-            "%d.%d.%d.%d",
-            ip and 0xff,
-            ip shr 8 and 0xff,
-            ip shr 16 and 0xff,
-            ip shr 24 and 0xff
-        )
+    private fun getGateWayIp(context: Context): String? {
+        val int2String: String?
+        val dhcpInfo = getDhcpInfo(context)!!
+        int2String = if (dhcpInfo.ipAddress == 0) {
+            localIp
+        } else {
+            int2String(dhcpInfo.ipAddress)
+        }
+        return int2String
+    }
+
+    private val localIp: String?
+        get() {
+            var str: String? = null
+            try {
+                val networkInterfaces = NetworkInterface.getNetworkInterfaces()
+                while (networkInterfaces.hasMoreElements()) {
+                    val inetAddresses = networkInterfaces.nextElement().inetAddresses
+                    while (inetAddresses.hasMoreElements()) {
+                        val nextElement = inetAddresses.nextElement()
+                        if (!nextElement.isLoopbackAddress && nextElement is Inet4Address) {
+                            str = nextElement.getHostAddress()
+                        }
+                    }
+                }
+            } catch (e: SocketException) {
+                e.printStackTrace()
+            }
+            return str
+        }
+
+
+    private fun int2String(i: Int): String {
+        return if (ByteOrder.nativeOrder() == ByteOrder.LITTLE_ENDIAN) {
+            (i and 255).toString() + "." + (i shr 8 and 255) + "." + (i shr 16 and 255) + "." + (i shr 24 and 255)
+        } else (i shr 24 and 255).toString() + "." + (i shr 16 and 255) + "." + (i shr 8 and 255) + "." + (i and 255)
+    }
+
+    @Suppress("DEPRECATION")
+    private fun getDhcpInfo(context: Context): DhcpInfo? {
+        val wifiManager = getWifiManager(context)
+        return wifiManager.dhcpInfo
     }
 
     class MyAsyncTask internal constructor(context: MainActivity) {
