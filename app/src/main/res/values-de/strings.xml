@@ -6,7 +6,6 @@
     <string name="first_reboot_to_coreelec">Erster Neustart</string>
     <string name="first_reboot_to_coreelec_info">"'"&lt;b>Erster Neustart&lt;/b>"'" muss beim ersten Start von CoreELEC oder nach einem Update des Android-Systems ausgeführt werden.</string>
     <string name="information">Information</string>
-    <string name="ip">127.0.0.1</string>
     <string name="reboot_to_coreelec">Normaler Neustart</string>
     <string name="reboot_to_coreelec_info">Nach dem verwenden von "'"&lt;b>Erster Neustart&lt;/b>"'" muss immer "'"&lt;b>Normaler Neustart&lt;/b>"'" verwendet werden, um nach CoreELEC neu zu starten.</string>
 </resources>

@@ -6,7 +6,7 @@
     <string name="first_reboot_to_coreelec">First reboot</string>
     <string name="first_reboot_to_coreelec_info">"'"&lt;b>First reboot&lt;/b>"'" must be executed when CoreELEC is started for the first time or after an update of the Android system.</string>
     <string name="information">Information</string>
-    <string name="ip">127.0.0.1</string>
+    <string name="ip" translatable="false">127.0.0.1</string>
     <string name="reboot_to_coreelec">Normal reboot</string>
     <string name="reboot_to_coreelec_info">After using "'"&lt;b>First reboot&lt;/b>"'", "'"&lt;b>Normal reboot&lt;/b>"'" must be always used to boot to CoreELEC.</string>
 </resources>
