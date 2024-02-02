@@ -4,13 +4,12 @@ plugins {
 }
 
 android {
-    compileSdk 34
-
     namespace 'com.jamal2367.coreelec'
+    compileSdk 34
 
     defaultConfig {
         applicationId 'com.jamal2367.coreelec'
-        minSdkVersion 24
+        minSdk 24
         targetSdk 34
         versionCode 30
         versionName "3.0"
