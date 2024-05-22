@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Neustart zu CoreELEC</string>
-    <string name="allow_usb_debugging_dialog">Das Dialogfeld für USB-Debugging bitte zulassen</string>
     <string name="enable_usb_debugging_first">Aktiviere zuerst USB-Debugging in den Entwickleroptionen</string>
     <string name="first_reboot_to_coreelec">Erster Neustart</string>
     <string name="first_reboot_to_coreelec_info">"'"&lt;b>Erster Neustart&lt;/b>"'" muss beim ersten Start von CoreELEC oder nach einem Update des Android-Systems ausgeführt werden.</string>

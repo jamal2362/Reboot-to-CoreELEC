@@ -20,6 +20,7 @@ import com.tananaev.adblib.AdbBase64
 import com.tananaev.adblib.AdbConnection
 import com.tananaev.adblib.AdbCrypto
 import com.tananaev.adblib.AdbStream
+import java.io.File
 import java.lang.ref.WeakReference
 import java.net.Inet4Address
 import java.net.NetworkInterface
@@ -33,6 +34,8 @@ class MainActivity : Activity() {
     private var connection: AdbConnection? = null
     private var stream: AdbStream? = null
     private var myAsyncTask: MyAsyncTask? = null
+    private val publicKeyName: String = "public.key"
+    private val privateKeyName: String = "private.key"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -79,8 +82,6 @@ class MainActivity : Activity() {
     }
 
     private fun onKeyCE(case: Int) {
-        Toast.makeText(this, getString(R.string.allow_usb_debugging_dialog), Toast.LENGTH_SHORT).show()
-
         connection = null
         stream = null
 
@@ -91,11 +92,11 @@ class MainActivity : Activity() {
 
     fun adbCommander(ip: String?, case: Int) {
         val socket = Socket(ip, 5555)
-        val generateAdbKeyPair = AdbCrypto.generateAdbKeyPair(AndroidBase64())
+        val crypto = readCryptoConfig(filesDir) ?: writeNewCryptoConfig(filesDir)
 
         try {
             if (stream == null || connection == null) {
-                connection = AdbConnection.create(socket, generateAdbKeyPair)
+                connection = AdbConnection.create(socket, crypto)
                 connection?.connect()
             }
 
@@ -121,6 +122,38 @@ class MainActivity : Activity() {
             e.printStackTrace()
             Thread.currentThread().interrupt()
         }
+    }
+
+    private fun readCryptoConfig(dataDir: File?): AdbCrypto? {
+        val pubKey = File(dataDir, publicKeyName)
+        val privKey = File(dataDir, privateKeyName)
+
+        var crypto: AdbCrypto? = null
+        if (pubKey.exists() && privKey.exists()) {
+            crypto = try {
+                AdbCrypto.loadAdbKeyPair(AndroidBase64(), privKey, pubKey)
+            } catch (e: Exception) {
+                null
+            }
+        }
+
+        return crypto
+    }
+
+    private fun writeNewCryptoConfig(dataDir: File?): AdbCrypto? {
+        val pubKey = File(dataDir, publicKeyName)
+        val privKey = File(dataDir, privateKeyName)
+
+        var crypto: AdbCrypto?
+
+        try {
+            crypto = AdbCrypto.generateAdbKeyPair(AndroidBase64())
+            crypto.saveAdbKeyPair(privKey, pubKey)
+        } catch (e: Exception) {
+            crypto = null
+        }
+
+        return crypto
     }
 
     private fun openDeveloperSettings() {

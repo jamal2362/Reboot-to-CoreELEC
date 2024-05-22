@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Újraindítás CoreELEC-el</string>
-    <string name="allow_usb_debugging_dialog">Kérjük, engedélyezze a párbeszédpanelt az USB-hibakereséshez</string>
     <string name="enable_usb_debugging_first">Először engedélyezze az USB hibakeresést a fejlesztői beállításoknál</string>
     <string name="first_reboot_to_coreelec">Első újraindítás</string>
     <string name="first_reboot_to_coreelec_info">"'"&lt;b>Első újraindítás&lt;/b>"'" a CoreELEC első indításakor vagy az Android rendszer frissítése után kell végrehajtani.</string>
