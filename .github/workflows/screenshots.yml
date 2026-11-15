@@ -3,6 +3,12 @@ name: Screenshots
 # Starts the debug build on emulators and uploads screenshots of the main screen.
 on:
   workflow_dispatch:
+  push:
+    branches-ignore: [main]
+    paths:
+      - 'app/**'
+      - '.github/screenshots.sh'
+      - '.github/workflows/screenshots.yml'
 
 permissions:
   contents: read

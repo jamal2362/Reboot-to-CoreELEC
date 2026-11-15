@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalButton
@@ -36,6 +35,7 @@ import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -98,8 +98,8 @@ fun RebootScreen(
 
             Spacer(Modifier.height(20.dp))
             Column(
-                modifier = Modifier.widthIn(max = 420.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.widthIn(max = 360.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
                 RebootRow(
                     mode = RebootMode.NORMAL,
@@ -204,7 +204,8 @@ private fun RebootRow(
     onInfo: (RebootMode) -> Unit,
     buttonModifier: Modifier = Modifier,
 ) {
-    val height = ButtonDefaults.MediumContainerHeight
+    val height = 48.dp
+    val colors = MaterialTheme.colorScheme
     val label = stringResource(mode.labelRes)
 
     Row(
@@ -221,22 +222,27 @@ private fun RebootRow(
         }
 
         if (primary) {
-            Button(
-                onClick = { onReboot(mode) },
-                shapes = ButtonDefaults.shapesFor(height),
-                modifier = modifier,
-                enabled = enabled,
-                border = focusBorder(buttonSource),
-                contentPadding = ButtonDefaults.contentPaddingFor(height),
-                interactionSource = buttonSource,
-            ) { content() }
-        } else {
             FilledTonalButton(
                 onClick = { onReboot(mode) },
                 shapes = ButtonDefaults.shapesFor(height),
                 modifier = modifier,
                 enabled = enabled,
+                colors = ButtonDefaults.filledTonalButtonColors(
+                    containerColor = colors.surfaceContainerHighest,
+                    contentColor = colors.onSurface,
+                ),
                 border = focusBorder(buttonSource),
+                contentPadding = ButtonDefaults.contentPaddingFor(height),
+                interactionSource = buttonSource,
+            ) { content() }
+        } else {
+            OutlinedButton(
+                onClick = { onReboot(mode) },
+                shapes = ButtonDefaults.shapesFor(height),
+                modifier = modifier,
+                enabled = enabled,
+                colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.onSurface),
+                border = focusBorder(buttonSource) ?: BorderStroke(1.dp, colors.outlineVariant),
                 contentPadding = ButtonDefaults.contentPaddingFor(height),
                 interactionSource = buttonSource,
             ) { content() }
@@ -247,18 +253,24 @@ private fun RebootRow(
         FilledTonalIconButton(
             onClick = { onInfo(mode) },
             shapes = IconButtonDefaults.shapes(),
-            modifier = Modifier.size(IconButtonDefaults.mediumContainerSize()),
+            modifier = Modifier.size(height),
             colors = if (infoFocused) {
-                IconButtonDefaults.filledIconButtonColors()
+                IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = colors.onSurface,
+                    contentColor = colors.surface,
+                )
             } else {
-                IconButtonDefaults.filledTonalIconButtonColors()
+                IconButtonDefaults.filledTonalIconButtonColors(
+                    containerColor = colors.surfaceContainer,
+                    contentColor = colors.onSurfaceVariant,
+                )
             },
             interactionSource = infoSource,
         ) {
             Icon(
                 painter = painterResource(R.drawable.ic_info_24),
                 contentDescription = stringResource(R.string.information) + ": " + label,
-                modifier = Modifier.size(IconButtonDefaults.mediumIconSize),
+                modifier = Modifier.size(IconButtonDefaults.smallIconSize),
             )
         }
     }
@@ -268,7 +280,7 @@ private fun RebootRow(
 @Composable
 private fun focusBorder(source: MutableInteractionSource): BorderStroke? {
     val focused by source.collectIsFocusedAsState()
-    return if (focused) BorderStroke(3.dp, MaterialTheme.colorScheme.onSurface) else null
+    return if (focused) BorderStroke(2.dp, MaterialTheme.colorScheme.onSurface) else null
 }
 
 @Composable
