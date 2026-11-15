@@ -2,11 +2,11 @@
 <resources>
     <string name="adb_status_checking">Prüfe ADB…</string>
     <string name="adb_status_ready">ADB bereit</string>
+    <string name="adb_status_needs_auth">ADB-Zugriff noch nicht erlaubt</string>
     <string name="adb_status_unreachable">ADB nicht erreichbar</string>
     <string name="app_name">Neustart zu CoreELEC</string>
     <string name="choose_reboot">Neustart wählen</string>
-    <string name="enable_usb_debugging_first">Aktiviere zuerst USB-Debugging in den Entwickleroptionen</string>
-    <string name="error_adb_unreachable">ADB ist auf Port %1$d nicht erreichbar. Aktiviere Netzwerk-Debugging (ADB über Netzwerk) in den Entwickleroptionen und versuche es erneut.</string>
+    <string name="error_adb_unreachable">ADB ist auf Port %1$d nicht erreichbar. Aktiviere USB-Debugging in den Entwickleroptionen und versuche es erneut.</string>
     <string name="error_generic">Neustart fehlgeschlagen: %1$s</string>
     <string name="error_no_reboot">Das Gerät wurde nicht neu gestartet</string>
     <string name="error_not_authorized">Der ADB-Zugriff wurde nicht erlaubt. Bestätige die Debugging-Abfrage und versuche es erneut.</string>
@@ -22,4 +22,5 @@
     <string name="update_failed">Update fehlgeschlagen: %1$s</string>
     <string name="update_installing">Installation wird gestartet…</string>
     <string name="update_press_to_install">OK drücken zum Herunterladen und Installieren</string>
+    <string name="open_developer_settings">Entwickleroptionen</string>
 </resources>

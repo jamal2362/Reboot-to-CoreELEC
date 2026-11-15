@@ -28,7 +28,17 @@ sealed interface RebootUiState {
         get() = this is Connecting || this is Rebooting
 }
 
-enum class AdbStatus { CHECKING, READY, UNREACHABLE }
+enum class AdbStatus {
+    CHECKING,
+
+    /** Reachable and this app's key is trusted: rebooting works without a prompt. */
+    READY,
+
+    /** Reachable, but the "Allow USB debugging?" prompt still has to be confirmed. */
+    NEEDS_AUTH,
+
+    UNREACHABLE,
+}
 
 class RebootViewModel(application: Application) : AndroidViewModel(application) {
 
@@ -42,6 +52,9 @@ class RebootViewModel(application: Application) : AndroidViewModel(application) 
 
     var deviceIp: String? by mutableStateOf(null)
         private set
+
+    /** Whether the developer options are unlocked on the device; set by the activity. */
+    var developerOptionsEnabled: Boolean by mutableStateOf(false)
 
     private val updateChecker = UpdateChecker(application)
 
@@ -86,11 +99,12 @@ class RebootViewModel(application: Application) : AndroidViewModel(application) 
     /** Checks whether the local ADB daemon is reachable and looks up the device's IP address. */
     fun refreshAdbStatus() {
         viewModelScope.launch {
-            val (ip, reachable) = withContext(Dispatchers.IO) {
-                AdbRebooter.localIpAddress() to rebooter.isReachable()
+            val (ip, status) = withContext(Dispatchers.IO) {
+                AdbRebooter.localIpAddress() to rebooter.probe()
             }
             deviceIp = ip
-            adbStatus = if (reachable) AdbStatus.READY else AdbStatus.UNREACHABLE
+            // A reboot that started meanwhile knows better (see [reboot]).
+            if (!uiState.isBusy) adbStatus = status
         }
     }
 
@@ -124,11 +138,15 @@ class RebootViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             uiState = try {
                 runInterruptible(Dispatchers.IO) {
-                    rebooter.reboot(mode) { uiState = RebootUiState.Rebooting(mode) }
+                    rebooter.reboot(mode) {
+                        adbStatus = AdbStatus.READY
+                        uiState = RebootUiState.Rebooting(mode)
+                    }
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: NotAuthorizedException) {
+                adbStatus = AdbStatus.NEEDS_AUTH
                 RebootUiState.Failed(R.string.error_not_authorized)
             } catch (e: NoRebootException) {
                 RebootUiState.Failed(R.string.error_no_reboot)

@@ -12,6 +12,8 @@ val CoreELECRed = Color(0xFFE30613)
 
 val StatusGreen = Color(0xFF6DD58C)
 
+val StatusRed = Color(0xFFF2564B)
+
 // Always dark: the app is made for TV boxes. Tones are derived from the CoreELEC red.
 private val ColorScheme = darkColorScheme(
     primary = Color(0xFFFFB4AB),

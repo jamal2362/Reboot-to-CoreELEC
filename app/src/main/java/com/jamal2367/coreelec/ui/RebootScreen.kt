@@ -83,12 +83,19 @@ fun RebootScreen(
     updateState: UpdateUiState,
     onReboot: (RebootMode) -> Unit,
     onInstallUpdate: () -> Unit,
+    developerOptionsEnabled: Boolean,
+    onOpenDeveloperSettings: () -> Unit,
 ) {
     val firstAction = remember { FocusRequester() }
 
-    // Put D-pad focus on the main action at start and whenever the actions become usable again.
+    // ADB is off: offer the way to switch it on, as long as the developer options can be opened.
+    val showDeveloperSettings = developerOptionsEnabled &&
+        uiState is RebootUiState.Failed && uiState.messageRes == R.string.error_adb_unreachable
+
+    // Put D-pad focus on the main action at start and whenever the actions become usable again,
+    // unless the developer options button is shown: that one takes focus itself.
     LaunchedEffect(uiState.isBusy) {
-        if (!uiState.isBusy) firstAction.requestFocus()
+        if (!uiState.isBusy && !showDeveloperSettings) firstAction.requestFocus()
     }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -102,7 +109,9 @@ fun RebootScreen(
             ) {
                 BrandPane(
                     uiState = uiState,
-                    adbReady = adbStatus == AdbStatus.READY,
+                    adbReady = adbStatus == AdbStatus.READY || adbStatus == AdbStatus.NEEDS_AUTH,
+                    showDeveloperSettings = showDeveloperSettings,
+                    onOpenDeveloperSettings = onOpenDeveloperSettings,
                     modifier = Modifier
                         .fillMaxHeight()
                         .fillMaxWidth(0.42f)
@@ -220,6 +229,7 @@ private fun AdbStatusLine(status: AdbStatus, deviceIp: String?, modifier: Modifi
         when (status) {
             AdbStatus.CHECKING -> R.string.adb_status_checking
             AdbStatus.READY -> R.string.adb_status_ready
+            AdbStatus.NEEDS_AUTH -> R.string.adb_status_needs_auth
             AdbStatus.UNREACHABLE -> R.string.adb_status_unreachable
         },
     )
@@ -236,7 +246,8 @@ private fun AdbStatusLine(status: AdbStatus, deviceIp: String?, modifier: Modifi
                     color = when (status) {
                         AdbStatus.CHECKING -> colors.outline
                         AdbStatus.READY -> StatusGreen
-                        AdbStatus.UNREACHABLE -> colors.error
+                        AdbStatus.NEEDS_AUTH -> colors.error
+                        AdbStatus.UNREACHABLE -> StatusRed
                     },
                     shape = CircleShape,
                 ),
@@ -251,7 +262,13 @@ private fun AdbStatusLine(status: AdbStatus, deviceIp: String?, modifier: Modifi
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun BrandPane(uiState: RebootUiState, adbReady: Boolean, modifier: Modifier = Modifier) {
+private fun BrandPane(
+    uiState: RebootUiState,
+    adbReady: Boolean,
+    showDeveloperSettings: Boolean,
+    onOpenDeveloperSettings: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val logoSize = 170.dp
 
     Column(
@@ -289,13 +306,18 @@ private fun BrandPane(uiState: RebootUiState, adbReady: Boolean, modifier: Modif
         )
 
         Spacer(Modifier.height(10.dp))
-        Status(uiState, adbReady)
+        Status(uiState, adbReady, showDeveloperSettings, onOpenDeveloperSettings)
     }
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun Status(uiState: RebootUiState, adbReady: Boolean) {
+private fun Status(
+    uiState: RebootUiState,
+    adbReady: Boolean,
+    showDeveloperSettings: Boolean,
+    onOpenDeveloperSettings: () -> Unit,
+) {
     val motion = MaterialTheme.motionScheme
     val enter = fadeIn(motion.defaultEffectsSpec()) +
         scaleIn(motion.defaultSpatialSpec(), initialScale = 0.9f)
@@ -340,7 +362,41 @@ private fun Status(uiState: RebootUiState, adbReady: Boolean) {
                 },
                 textAlign = TextAlign.Center,
             )
+
+            // Only for the state this content shows, not for one that is fading out.
+            if (showDeveloperSettings && state == uiState) {
+                Spacer(Modifier.height(4.dp))
+                DeveloperSettingsButton(onClick = onOpenDeveloperSettings)
+            }
         }
+    }
+}
+
+@Composable
+private fun DeveloperSettingsButton(onClick: () -> Unit) {
+    val colors = MaterialTheme.colorScheme
+    val source = remember { MutableInteractionSource() }
+    val focused by source.collectIsFocusedAsState()
+    val focusRequester = remember { FocusRequester() }
+
+    // Shown after a failed attempt: opening the settings is the obvious next step.
+    LaunchedEffect(Unit) { focusRequester.requestFocus() }
+
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.focusRequester(focusRequester),
+        shape = RoundedCornerShape(20.dp),
+        // Same fill and focus outline as the "Normal reboot" card.
+        color = colors.surfaceContainerHighest,
+        contentColor = colors.onSurface,
+        border = if (focused) BorderStroke(1.5.dp, colors.outline) else null,
+        interactionSource = source,
+    ) {
+        Text(
+            text = stringResource(R.string.open_developer_settings),
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 10.dp),
+            style = MaterialTheme.typography.labelLarge,
+        )
     }
 }
 

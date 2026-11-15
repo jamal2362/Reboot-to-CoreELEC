@@ -5,7 +5,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.provider.Settings
 import android.util.Log
-import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -21,13 +20,6 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
-        if (!isAdbEnabled()) {
-            Toast.makeText(this, R.string.enable_usb_debugging_first, Toast.LENGTH_LONG).show()
-            openDeveloperSettings()
-            finish()
-            return
-        }
-
         setContent {
             AppTheme {
                 RebootScreen(
@@ -38,6 +30,8 @@ class MainActivity : ComponentActivity() {
                     updateState = viewModel.updateState,
                     onInstallUpdate = viewModel::installUpdate,
                     onReboot = viewModel::reboot,
+                    developerOptionsEnabled = viewModel.developerOptionsEnabled,
+                    onOpenDeveloperSettings = ::openDeveloperSettings,
                 )
             }
         }
@@ -46,6 +40,8 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         // The user may have changed the debugging settings in the meantime.
+        viewModel.developerOptionsEnabled =
+            Settings.Global.getInt(contentResolver, Settings.Global.DEVELOPMENT_SETTINGS_ENABLED, 0) == 1
         viewModel.refreshAdbStatus()
     }
 
@@ -63,10 +59,6 @@ class MainActivity : ComponentActivity() {
                 Log.w(TAG, "No activity for $action")
             }
         }
-    }
-
-    private fun isAdbEnabled(): Boolean {
-        return Settings.Global.getInt(contentResolver, Settings.Global.ADB_ENABLED, 0) == 1
     }
 
     private companion object {

@@ -4,6 +4,7 @@ import android.util.Base64
 import android.util.Log
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import com.tananaev.adblib.AdbAuthenticationFailedException
 import com.tananaev.adblib.AdbBase64
 import com.tananaev.adblib.AdbConnection
 import com.tananaev.adblib.AdbCrypto
@@ -102,13 +103,32 @@ class AdbRebooter(private val keyDir: File) {
         throw NoRebootException()
     }
 
-    /** Whether the local ADB daemon accepts TCP connections. */
-    fun isReachable(): Boolean {
+    /**
+     * Checks whether the local ADB daemon is reachable and already trusts this app's key.
+     *
+     * Only the signature of a known key is offered, never the public key, so this does not
+     * show the "Allow USB debugging?" prompt.
+     */
+    fun probe(): AdbStatus {
         return try {
-            Socket().use { it.connect(InetSocketAddress(ADB_HOST, ADB_PORT), PROBE_TIMEOUT_MS) }
-            true
+            val crypto = loadOrCreateCrypto()
+            Socket().use { socket ->
+                socket.connect(InetSocketAddress(ADB_HOST, ADB_PORT), PROBE_TIMEOUT_MS)
+                AdbConnection.create(socket, crypto).use { connection ->
+                    if (connection.connect(PROBE_AUTH_TIMEOUT_S, TimeUnit.SECONDS, true)) {
+                        AdbStatus.READY
+                    } else {
+                        AdbStatus.NEEDS_AUTH
+                    }
+                }
+            }
+        } catch (e: AdbAuthenticationFailedException) {
+            AdbStatus.NEEDS_AUTH
+        } catch (e: InterruptedException) {
+            Thread.currentThread().interrupt()
+            AdbStatus.UNREACHABLE
         } catch (e: IOException) {
-            false
+            AdbStatus.UNREACHABLE
         }
     }
 
@@ -131,7 +151,17 @@ class AdbRebooter(private val keyDir: File) {
         }
     }
 
+    @Volatile
+    private var crypto: AdbCrypto? = null
+
+    // Synchronized: a status probe and a reboot may ask for the key pair at the same time.
+    @Synchronized
     private fun loadOrCreateCrypto(): AdbCrypto {
+        crypto?.let { return it }
+        return readOrGenerateCrypto().also { crypto = it }
+    }
+
+    private fun readOrGenerateCrypto(): AdbCrypto {
         val publicKey = File(keyDir, PUBLIC_KEY_NAME)
         val privateKey = File(keyDir, PRIVATE_KEY_NAME)
         val base64 = AdbBase64 { data -> Base64.encodeToString(data, Base64.NO_WRAP) }
@@ -156,6 +186,7 @@ class AdbRebooter(private val keyDir: File) {
         private const val CONNECT_TIMEOUT_MS = 5_000
         private const val PROBE_TIMEOUT_MS = 2_000
         private const val AUTH_TIMEOUT_S = 60L
+        private const val PROBE_AUTH_TIMEOUT_S = 3L
         private const val STATUS_DELAY_MS = 1_500L
         private const val REBOOT_GRACE_MS = 10_000L
         private const val PUBLIC_KEY_NAME = "public.key"
