@@ -317,7 +317,7 @@ private fun AdbStatusLine(status: AdbStatus, deviceIp: String?, modifier: Modifi
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(20.dp),
-        color = colors.surfaceContainerLow,
+        color = colors.surfaceContainer,
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
@@ -747,7 +747,7 @@ private fun RebootAction(
             .alpha(if (enabled) 1f else 0.5f),
         enabled = enabled,
         shape = RoundedCornerShape(corner),
-        color = focusColor(focused, colors.surfaceContainerLow),
+        color = focusColor(focused, colors.surfaceContainer),
         contentColor = colors.onSurface,
         interactionSource = source,
     ) {
