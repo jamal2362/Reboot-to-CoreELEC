@@ -1,7 +1,12 @@
 package com.jamal2367.coreelec.ui
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -52,6 +57,7 @@ import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -61,6 +67,9 @@ import com.jamal2367.coreelec.AdbStatus
 import com.jamal2367.coreelec.R
 import com.jamal2367.coreelec.RebootMode
 import com.jamal2367.coreelec.RebootUiState
+
+/** Duration of one full turn of the shape behind the logo. */
+private const val LOGO_SHAPE_TURN_MS = 60_000
 
 @Composable
 fun RebootScreen(
@@ -163,12 +172,20 @@ private fun BrandPane(uiState: RebootUiState, adbReady: Boolean, modifier: Modif
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
-        Box(
-            modifier = Modifier
-                .size(logoSize)
-                .background(MaterialTheme.colorScheme.surfaceContainerHigh, MaterialShapes.Cookie12Sided.toShape()),
-            contentAlignment = Alignment.Center,
-        ) {
+        // The shape behind the logo turns very slowly; the logo itself stays upright.
+        val rotation by rememberInfiniteTransition(label = "logoShape").animateFloat(
+            initialValue = 0f,
+            targetValue = 360f,
+            animationSpec = infiniteRepeatable(tween(LOGO_SHAPE_TURN_MS, easing = LinearEasing)),
+            label = "rotation",
+        )
+        Box(modifier = Modifier.size(logoSize), contentAlignment = Alignment.Center) {
+            Box(
+                Modifier
+                    .matchParentSize()
+                    .graphicsLayer { rotationZ = rotation }
+                    .background(MaterialTheme.colorScheme.surfaceContainerHigh, MaterialShapes.Cookie9Sided.toShape()),
+            )
             Image(
                 painter = painterResource(R.drawable.coreelec),
                 contentDescription = null,
