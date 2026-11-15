@@ -49,6 +49,11 @@ class MainActivity : ComponentActivity() {
         viewModel.refreshAdbStatus()
     }
 
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        viewModel.onWindowFocusChanged(hasFocus)
+    }
+
     private fun openDeveloperSettings() {
         for (action in listOf(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS, Settings.ACTION_SETTINGS)) {
             try {

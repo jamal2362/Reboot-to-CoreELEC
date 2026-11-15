@@ -12,6 +12,8 @@ import java.net.ConnectException
 import java.net.SocketTimeoutException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
@@ -42,6 +44,11 @@ class RebootViewModel(application: Application) : AndroidViewModel(application) 
         private set
 
     private val updateChecker = UpdateChecker(application)
+
+    /** Whether the window lost focus (to the "Allow USB debugging?" prompt) while connecting. */
+    private var promptShown = false
+
+    private var promptDismissedJob: Job? = null
 
     private val updateInstaller = UpdateInstaller(application)
 
@@ -87,9 +94,32 @@ class RebootViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    /**
+     * The "Allow USB debugging?" prompt is a system window that takes focus from the app.
+     * Once focus is back and the connection still is not authorized, the prompt was denied.
+     */
+    fun onWindowFocusChanged(hasFocus: Boolean) {
+        if (uiState != RebootUiState.Connecting) return
+        if (!hasFocus) {
+            promptShown = true
+            promptDismissedJob?.cancel()
+        } else if (promptShown) {
+            promptShown = false
+            promptDismissedJob = viewModelScope.launch {
+                // After "Allow" adbd answers within moments; give it a little slack.
+                delay(PROMPT_ANSWER_GRACE_MS)
+                if (uiState == RebootUiState.Connecting) {
+                    withContext(Dispatchers.IO) { rebooter.abortAuthorization() }
+                }
+            }
+        }
+    }
+
     fun reboot(mode: RebootMode) {
         if (uiState.isBusy) return
         uiState = RebootUiState.Connecting
+        promptShown = false
+        promptDismissedJob?.cancel()
 
         viewModelScope.launch {
             uiState = try {
@@ -120,5 +150,6 @@ class RebootViewModel(application: Application) : AndroidViewModel(application) 
 
     private companion object {
         const val TAG = "RebootViewModel"
+        const val PROMPT_ANSWER_GRACE_MS = 750L
     }
 }

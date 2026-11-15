@@ -51,6 +51,9 @@ class AdbRebooter(private val keyDir: File) {
     @Volatile
     private var socket: Socket? = null
 
+    @Volatile
+    private var authRejected = false
+
     /**
      * Connects, authorizes and sends [mode]'s command. [onAuthorized] is called once the
      * connection is established, shortly before the command is sent.
@@ -60,6 +63,7 @@ class AdbRebooter(private val keyDir: File) {
     @Throws(IOException::class, InterruptedException::class)
     fun reboot(mode: RebootMode, onAuthorized: () -> Unit): Nothing {
         val crypto = loadOrCreateCrypto()
+        authRejected = false
 
         Socket().use { socket ->
             this.socket = socket
@@ -67,9 +71,15 @@ class AdbRebooter(private val keyDir: File) {
 
             AdbConnection.create(socket, crypto).use { connection ->
                 // Blocks while the user confirms the "Allow USB debugging?" prompt.
-                if (!connection.connect(AUTH_TIMEOUT_S, TimeUnit.SECONDS, false)) {
-                    throw NotAuthorizedException()
+                // adbd stays silent when the prompt is denied, so a rejection either runs into
+                // the timeout or is cut short by [abortAuthorization].
+                val authorized = try {
+                    connection.connect(AUTH_TIMEOUT_S, TimeUnit.SECONDS, false)
+                } catch (e: IOException) {
+                    if (authRejected) throw NotAuthorizedException()
+                    throw e
                 }
+                if (!authorized || authRejected) throw NotAuthorizedException()
 
                 onAuthorized()
                 // Give the user a moment to read the status before the screen goes dark.
@@ -100,6 +110,16 @@ class AdbRebooter(private val keyDir: File) {
         } catch (e: IOException) {
             false
         }
+    }
+
+    /**
+     * Ends a [reboot] call that is still waiting for authorization, e.g. because the
+     * "Allow USB debugging?" prompt was dismissed without allowing. It then fails with
+     * [NotAuthorizedException].
+     */
+    fun abortAuthorization() {
+        authRejected = true
+        close()
     }
 
     /** Aborts a running [reboot] call. */
