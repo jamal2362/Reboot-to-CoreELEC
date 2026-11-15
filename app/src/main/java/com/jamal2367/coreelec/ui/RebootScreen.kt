@@ -44,12 +44,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
+import androidx.compose.material3.LocalMinimumInteractiveComponentSize
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -66,6 +68,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.jamal2367.coreelec.AdbStatus
 import com.jamal2367.coreelec.LogKind
@@ -84,8 +87,6 @@ private const val TERMINAL_CURSOR_BLINK_MS = 1_000
 /** Column for the line markers ($, ✓, i, …), about two monospace characters wide. */
 private val TERMINAL_MARKER_WIDTH = 16.dp
 
-/** Room for eight lines of the terminal window. */
-private val TERMINAL_HEIGHT = 152.dp
 
 @Composable
 fun RebootScreen(
@@ -297,12 +298,13 @@ private fun BrandPane(
     onOpenDeveloperSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val logoSize = 170.dp
+    val logoSize = 140.dp
 
+    // Logo and title at the top; the terminal takes the rest of the height and ends level
+    // with the ADB status box in the bottom right corner (both 24 dp above the bottom).
     Column(
-        modifier = modifier.padding(24.dp),
+        modifier = modifier.padding(start = 24.dp, end = 24.dp, top = 32.dp, bottom = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center,
     ) {
         // The shape behind the logo turns very slowly; the logo itself stays upright.
         val rotation by rememberInfiniteTransition(label = "logoShape").animateFloat(
@@ -333,8 +335,8 @@ private fun BrandPane(
             textAlign = TextAlign.Center,
         )
 
-        Spacer(Modifier.height(14.dp))
-        Terminal(log)
+        Spacer(Modifier.height(20.dp))
+        Terminal(log, modifier = Modifier.weight(1f))
 
         DeveloperSettings(visible = showDeveloperSettings, onClick = onOpenDeveloperSettings)
     }
@@ -342,7 +344,7 @@ private fun BrandPane(
 
 /** A small terminal window: the ADB steps scroll in from the bottom, under a blinking cursor. */
 @Composable
-private fun Terminal(lines: List<LogLine>) {
+private fun Terminal(lines: List<LogLine>, modifier: Modifier = Modifier) {
     val colors = MaterialTheme.colorScheme
     val listState = rememberLazyListState()
     val textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace)
@@ -362,14 +364,15 @@ private fun Terminal(lines: List<LogLine>) {
     Surface(
         modifier = Modifier
             .widthIn(max = 380.dp)
-            .fillMaxWidth(),
+            .fillMaxWidth()
+            .then(modifier),
         shape = RoundedCornerShape(16.dp),
         color = colors.surfaceContainerLowest,
     ) {
         LazyColumn(
             state = listState,
             modifier = Modifier
-                .height(TERMINAL_HEIGHT)
+                .fillMaxSize()
                 .padding(horizontal = 14.dp, vertical = 10.dp),
             userScrollEnabled = false,
         ) {
@@ -422,7 +425,11 @@ private fun DeveloperSettings(visible: Boolean, onClick: () -> Unit) {
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Spacer(Modifier.height(14.dp))
-            DeveloperSettingsButton(onClick = onClick)
+            // Without the invisible 48 dp touch margin, so the button's visible bottom edge
+            // lines up with the ADB status box in the bottom right corner.
+            CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+                DeveloperSettingsButton(onClick = onClick)
+            }
         }
     }
 }
