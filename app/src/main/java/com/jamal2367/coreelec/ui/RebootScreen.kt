@@ -383,7 +383,8 @@ private fun Terminal(lines: List<LogLine>, modifier: Modifier = Modifier) {
             .fillMaxWidth()
             .then(modifier),
         shape = RoundedCornerShape(16.dp),
-        color = colors.surfaceContainerLowest,
+        // Same as the background of the actions side on the right.
+        color = colors.background,
     ) {
         LazyColumn(
             state = listState,
