@@ -7,6 +7,7 @@ import java.net.HttpURLConnection
 import java.net.URL
 import org.json.JSONException
 import org.json.JSONObject
+import androidx.core.content.edit
 
 /** A release that is newer than the installed app. [apkUrl] is null if the release has no APK attached. */
 data class UpdateInfo(val version: String, val apkUrl: String?)
@@ -29,10 +30,10 @@ class UpdateChecker(context: Context) {
     /** Asks GitHub for the latest release. Blocks; returns it if it is newer than the installed version. */
     fun fetchUpdate(): UpdateInfo? {
         val latest = fetchLatestRelease() ?: return cachedUpdate()
-        prefs.edit()
-            .putString(KEY_LATEST, latest.version)
-            .putString(KEY_APK_URL, latest.apkUrl)
-            .apply()
+        prefs.edit {
+            putString(KEY_LATEST, latest.version)
+                .putString(KEY_APK_URL, latest.apkUrl)
+        }
         return latest.takeIf { isNewer(it.version, installedVersion) }
     }
 

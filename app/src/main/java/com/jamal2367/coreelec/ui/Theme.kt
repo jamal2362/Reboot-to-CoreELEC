@@ -1,7 +1,6 @@
 package com.jamal2367.coreelec.ui
 
 import androidx.compose.material.ripple.RippleAlpha
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MotionScheme
@@ -54,7 +53,6 @@ private val ColorScheme = darkColorScheme(
     outlineVariant = Color(0xFF464B65),
 )
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AppTheme(content: @Composable () -> Unit) {
     MaterialExpressiveTheme(

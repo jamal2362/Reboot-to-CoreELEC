@@ -57,7 +57,7 @@ class MainActivity : ComponentActivity() {
             try {
                 startActivity(Intent(action))
                 return
-            } catch (e: ActivityNotFoundException) {
+            } catch (_: ActivityNotFoundException) {
                 Log.w(TAG, "No activity for $action")
             }
         }

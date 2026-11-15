@@ -99,7 +99,7 @@ class AdbRebooter(private val keyDir: File) {
                 // Keep the shell alive until the device goes down or the command returns.
                 try {
                     while (!stream.isClosed) stream.read()
-                } catch (e: IOException) {
+                } catch (_: IOException) {
                     // Expected: the connection drops when the device reboots.
                 }
             }
@@ -141,7 +141,7 @@ class AdbRebooter(private val keyDir: File) {
                 val stream = connection.open(service)
                 Log.d(TAG, "Running \"$service\"")
 
-                // Collect raw bytes and cut them at line breaks, so that multi-byte characters
+                // Collect raw bytes and cut them at line breaks, so that multibyte characters
                 // split across two packets still decode correctly.
                 val pending = ByteArrayOutputStream()
                 fun emitLines(flush: Boolean) {
@@ -166,7 +166,7 @@ class AdbRebooter(private val keyDir: File) {
                         pending.write(stream.read())
                         emitLines(flush = false)
                     }
-                } catch (e: IOException) {
+                } catch (_: IOException) {
                     // The service closed its stream: the command has finished.
                 }
                 emitLines(flush = true)
@@ -193,12 +193,12 @@ class AdbRebooter(private val keyDir: File) {
                     }
                 }
             }
-        } catch (e: AdbAuthenticationFailedException) {
+        } catch (_: AdbAuthenticationFailedException) {
             AdbStatus.NEEDS_AUTH
-        } catch (e: InterruptedException) {
+        } catch (_: InterruptedException) {
             Thread.currentThread().interrupt()
             AdbStatus.UNREACHABLE
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             AdbStatus.UNREACHABLE
         }
     }
@@ -217,7 +217,7 @@ class AdbRebooter(private val keyDir: File) {
     fun close() {
         try {
             socket?.close()
-        } catch (e: IOException) {
+        } catch (_: IOException) {
             // Nothing left to do.
         }
     }
@@ -274,7 +274,7 @@ class AdbRebooter(private val keyDir: File) {
                     .filterIsInstance<Inet4Address>()
                     .firstOrNull { it.isSiteLocalAddress }
                     ?.hostAddress
-            } catch (e: SocketException) {
+            } catch (_: SocketException) {
                 null
             }
         }

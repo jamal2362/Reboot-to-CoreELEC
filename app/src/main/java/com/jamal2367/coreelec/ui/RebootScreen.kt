@@ -175,7 +175,7 @@ fun RebootScreen(
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Box {
-            // The brand pane's colour fills the whole row; the actions pane sits on top of it
+            // The brand pane's color fills the whole row; the actions pane sits on top of it
             // with rounded corners at the top and bottom where the two halves meet.
             Row(
                 Modifier
@@ -465,7 +465,6 @@ private fun BrandPane(
  * A small terminal window: the ADB steps scroll in from the bottom, under a "$ _" prompt.
  * Pressing OK on it opens the prompt for an ADB command of one's own (see [onRunCommand]).
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun Terminal(
     lines: List<LogLine>,
@@ -546,7 +545,7 @@ private fun Terminal(
             .focusScale(hasFocus),
         enabled = enabled,
         shape = RoundedCornerShape(16.dp),
-        // Same as the background of the actions side on the right; the cookie colour while focused.
+        // Same as the background of the actions side on the right; the cookie color while focused.
         color = focusColor(hasFocus, colors.background),
     ) {
         LazyColumn(
@@ -637,7 +636,6 @@ private fun Terminal(
 }
 
 /** The way to the developer options, below the terminal, only when ADB was found switched off. */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun DeveloperSettings(visible: Boolean, onClick: () -> Unit) {
     val motion = MaterialTheme.motionScheme
@@ -719,7 +717,6 @@ private fun ActionsPane(
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun RebootAction(
     mode: RebootMode,
@@ -789,7 +786,6 @@ private fun RebootAction(
  * D-pad focus on a TV: the focused button grows a little (like on the Google TV home screen).
  * Goes together with [focusColor]; there is no outline.
  */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun Modifier.focusScale(focused: Boolean): Modifier {
     val scale by animateFloatAsState(
@@ -804,7 +800,6 @@ private fun Modifier.focusScale(focused: Boolean): Modifier {
 }
 
 /** The fill of a button: [base] normally, [FocusContainer] while focused. */
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun focusColor(focused: Boolean, base: Color): Color {
     val color by animateColorAsState(

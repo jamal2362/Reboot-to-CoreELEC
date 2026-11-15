@@ -19,6 +19,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.time.Duration.Companion.milliseconds
 
 sealed interface RebootUiState {
     data object Idle : RebootUiState
@@ -58,10 +59,9 @@ class RebootViewModel(application: Application) : AndroidViewModel(application) 
     var deviceIp: String? by mutableStateOf(null)
         private set
 
-    private val _log = mutableStateListOf<LogLine>()
-
     /** What the terminal window shows, oldest line first. */
-    val log: List<LogLine> get() = _log
+    val log: List<LogLine>
+        field = mutableStateListOf<LogLine>()
 
     /** The last probe result written to the log, so that unchanged results are not repeated. */
     private var loggedProbe: AdbStatus? = null
@@ -147,7 +147,7 @@ class RebootViewModel(application: Application) : AndroidViewModel(application) 
             promptShown = false
             promptDismissedJob = viewModelScope.launch {
                 // After "Allow" adbd answers within moments; give it a little slack.
-                delay(PROMPT_ANSWER_GRACE_MS)
+                delay(PROMPT_ANSWER_GRACE_MS.milliseconds)
                 if (uiState == RebootUiState.Connecting) {
                     withContext(Dispatchers.IO) { rebooter.abortAuthorization() }
                 }
@@ -181,19 +181,19 @@ class RebootViewModel(application: Application) : AndroidViewModel(application) 
                 }
             } catch (e: CancellationException) {
                 throw e
-            } catch (e: NotAuthorizedException) {
+            } catch (_: NotAuthorizedException) {
                 adbStatus = AdbStatus.NEEDS_AUTH
                 log(LogLine(LogKind.ERROR, R.string.log_not_authorized))
                 log(LogLine(LogKind.HINT, R.string.log_hint_confirm_prompt))
                 RebootUiState.Failed(R.string.error_not_authorized)
-            } catch (e: NoRebootException) {
+            } catch (_: NoRebootException) {
                 log(LogLine(LogKind.ERROR, R.string.log_no_reboot))
                 RebootUiState.Failed(R.string.error_no_reboot)
-            } catch (e: ConnectException) {
+            } catch (_: ConnectException) {
                 log(LogLine(LogKind.ERROR, R.string.log_unreachable, listOf(AdbRebooter.ADB_PORT)))
                 log(LogLine(LogKind.HINT, R.string.log_hint_enable_debugging))
                 RebootUiState.Failed(R.string.error_adb_unreachable, AdbRebooter.ADB_PORT)
-            } catch (e: SocketTimeoutException) {
+            } catch (_: SocketTimeoutException) {
                 log(LogLine(LogKind.ERROR, R.string.log_unreachable, listOf(AdbRebooter.ADB_PORT)))
                 log(LogLine(LogKind.HINT, R.string.log_hint_enable_debugging))
                 RebootUiState.Failed(R.string.error_adb_unreachable, AdbRebooter.ADB_PORT)
@@ -238,7 +238,7 @@ class RebootViewModel(application: Application) : AndroidViewModel(application) 
         viewModelScope.launch {
             uiState = try {
                 var outputLines = 0
-                val finished = withTimeoutOrNull(COMMAND_TIMEOUT_MS) {
+                val finished = withTimeoutOrNull(COMMAND_TIMEOUT_MS.milliseconds) {
                     runInterruptible(Dispatchers.IO) {
                         rebooter.run(
                             service,
@@ -262,16 +262,16 @@ class RebootViewModel(application: Application) : AndroidViewModel(application) 
                 RebootUiState.Idle
             } catch (e: CancellationException) {
                 throw e
-            } catch (e: NotAuthorizedException) {
+            } catch (_: NotAuthorizedException) {
                 adbStatus = AdbStatus.NEEDS_AUTH
                 log(LogLine(LogKind.ERROR, R.string.log_not_authorized))
                 log(LogLine(LogKind.HINT, R.string.log_hint_confirm_prompt))
                 RebootUiState.Failed(R.string.error_not_authorized)
-            } catch (e: ConnectException) {
+            } catch (_: ConnectException) {
                 log(LogLine(LogKind.ERROR, R.string.log_unreachable, listOf(AdbRebooter.ADB_PORT)))
                 log(LogLine(LogKind.HINT, R.string.log_hint_enable_debugging))
                 RebootUiState.Failed(R.string.error_adb_unreachable, AdbRebooter.ADB_PORT)
-            } catch (e: SocketTimeoutException) {
+            } catch (_: SocketTimeoutException) {
                 log(LogLine(LogKind.ERROR, R.string.log_unreachable, listOf(AdbRebooter.ADB_PORT)))
                 log(LogLine(LogKind.HINT, R.string.log_hint_enable_debugging))
                 RebootUiState.Failed(R.string.error_adb_unreachable, AdbRebooter.ADB_PORT)
@@ -288,8 +288,8 @@ class RebootViewModel(application: Application) : AndroidViewModel(application) 
     /** Adds a line to the terminal window; safe to call from any thread, keeps the call order. */
     private fun log(line: LogLine) {
         viewModelScope.launch(Dispatchers.Main) {
-            _log += line
-            if (_log.size > MAX_LOG_LINES) _log.removeRange(0, _log.size - MAX_LOG_LINES)
+            log += line
+            if (log.size > MAX_LOG_LINES) log.removeRange(0, log.size - MAX_LOG_LINES)
         }
     }
 
@@ -302,6 +302,6 @@ class RebootViewModel(application: Application) : AndroidViewModel(application) 
         const val PROMPT_ANSWER_GRACE_MS = 750L
         const val MAX_LOG_LINES = 300
         const val COMMAND_TIMEOUT_MS = 30_000L
-        val ADB_ADDRESS = "127.0.0.1:${AdbRebooter.ADB_PORT}"
+        const val ADB_ADDRESS = "127.0.0.1:${AdbRebooter.ADB_PORT}"
     }
 }
