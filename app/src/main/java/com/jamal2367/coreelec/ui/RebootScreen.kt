@@ -261,8 +261,8 @@ private fun UpdateNotice(
             .focusScale(focused),
         enabled = canInstall,
         shape = RoundedCornerShape(20.dp),
-        // Same fill as the developer options button next to it (the cookie colour behind the logo).
-        color = focusColor(focused, colors.surfaceContainerHigh),
+        // Same fill as the terminal window above it; lighter while focused.
+        color = focusColor(focused, colors.background),
         contentColor = colors.onSurface,
         interactionSource = source,
     ) {
