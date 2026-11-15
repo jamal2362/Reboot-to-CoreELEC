@@ -57,6 +57,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -100,6 +101,7 @@ fun RebootScreen(
     onOpenDeveloperSettings: () -> Unit,
 ) {
     val firstAction = remember { FocusRequester() }
+    val secondAction = remember { FocusRequester() }
 
     // ADB is off (found at start or by a failed attempt): offer the way to switch it on,
     // as long as the developer options can be opened.
@@ -137,6 +139,7 @@ fun RebootScreen(
                     enabled = !uiState.isBusy,
                     onReboot = onReboot,
                     firstAction = firstAction,
+                    secondAction = secondAction,
                     modifier = Modifier
                         .fillMaxSize()
                         .background(
@@ -166,6 +169,9 @@ fun RebootScreen(
                         update = availableUpdate,
                         state = updateState,
                         onInstall = onInstallUpdate,
+                        // The cards' scrolling column reaches down behind this notice, so the
+                        // D-pad search does not see the cards as "above" it: point Up at them.
+                        modifier = Modifier.focusProperties { up = secondAction },
                     )
                 }
                 AdbStatusLine(status = adbStatus, deviceIp = deviceIp)
@@ -197,10 +203,10 @@ private fun UpdateNotice(
         modifier = modifier.focusRequester(focusRequester),
         enabled = canInstall,
         shape = RoundedCornerShape(20.dp),
-        // Same fill and focus outline as the "Normal reboot" card.
-        color = colors.surfaceContainerHighest,
+        // Same fill as the "First reboot" card, same focus outline as all buttons.
+        color = colors.surfaceContainer,
         contentColor = colors.onSurface,
-        border = if (focused) BorderStroke(1.5.dp, colors.outline) else null,
+        border = if (focused) BorderStroke(1.5.dp, FocusOutline) else null,
         interactionSource = source,
     ) {
         Row(
@@ -250,29 +256,36 @@ private fun AdbStatusLine(status: AdbStatus, deviceIp: String?, modifier: Modifi
         },
     )
 
-    Row(
+    // A box like the update notice above it, so both read as one group.
+    Surface(
         modifier = modifier,
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
+        shape = RoundedCornerShape(20.dp),
+        color = colors.surfaceContainer,
     ) {
-        Box(
-            Modifier
-                .size(8.dp)
-                .background(
-                    color = when (status) {
-                        AdbStatus.CHECKING -> colors.outline
-                        AdbStatus.READY -> StatusGreen
-                        AdbStatus.NEEDS_AUTH -> colors.error
-                        AdbStatus.UNREACHABLE -> StatusRed
-                    },
-                    shape = CircleShape,
-                ),
-        )
-        Text(
-            text = if (deviceIp != null) "$label • $deviceIp" else label,
-            style = MaterialTheme.typography.bodySmall,
-            color = colors.onSurfaceVariant,
-        )
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                Modifier
+                    .size(8.dp)
+                    .background(
+                        color = when (status) {
+                            AdbStatus.CHECKING -> colors.outline
+                            AdbStatus.READY -> StatusGreen
+                            AdbStatus.NEEDS_AUTH -> colors.error
+                            AdbStatus.UNREACHABLE -> StatusRed
+                        },
+                        shape = CircleShape,
+                    ),
+            )
+            Text(
+                text = if (deviceIp != null) "$label • $deviceIp" else label,
+                style = MaterialTheme.typography.bodySmall,
+                color = colors.onSurfaceVariant,
+            )
+        }
     }
 }
 
@@ -428,10 +441,10 @@ private fun DeveloperSettingsButton(onClick: () -> Unit) {
         onClick = onClick,
         modifier = Modifier.focusRequester(focusRequester),
         shape = RoundedCornerShape(20.dp),
-        // Same fill and focus outline as the "Normal reboot" card.
-        color = colors.surfaceContainerHighest,
+        // Same fill as the turning cookie shape behind the logo, same focus outline as all buttons.
+        color = colors.surfaceContainerHigh,
         contentColor = colors.onSurface,
-        border = if (focused) BorderStroke(1.5.dp, colors.outline) else null,
+        border = if (focused) BorderStroke(1.5.dp, FocusOutline) else null,
         interactionSource = source,
     ) {
         Text(
@@ -447,6 +460,7 @@ private fun ActionsPane(
     enabled: Boolean,
     onReboot: (RebootMode) -> Unit,
     firstAction: FocusRequester,
+    secondAction: FocusRequester,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -471,6 +485,7 @@ private fun ActionsPane(
             primary = false,
             enabled = enabled,
             onReboot = onReboot,
+            modifier = Modifier.focusRequester(secondAction),
         )
     }
 }
@@ -505,7 +520,7 @@ private fun RebootAction(
         color = if (primary) colors.surfaceContainerHighest else colors.surfaceContainer,
         contentColor = colors.onSurface,
         // A clearly visible outline for D-pad focus; the default state layer is too subtle on a TV.
-        border = if (focused) BorderStroke(1.5.dp, colors.outline) else null,
+        border = if (focused) BorderStroke(1.5.dp, FocusOutline) else null,
         interactionSource = source,
     ) {
         Row(

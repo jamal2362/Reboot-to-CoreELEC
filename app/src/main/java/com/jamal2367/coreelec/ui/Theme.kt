@@ -14,6 +14,9 @@ val StatusGreen = Color(0xFF6DD58C)
 
 val StatusRed = Color(0xFFF2564B)
 
+/** Focus outline of buttons and cards: a little darker than the theme's outline (#8F92A6). */
+val FocusOutline = Color(0xFF6E7186)
+
 // Always dark: the app is made for TV boxes. Tones are derived from the CoreELEC red.
 private val ColorScheme = darkColorScheme(
     primary = Color(0xFFFFB4AB),
