@@ -16,4 +16,5 @@
     <string name="reboot_to_coreelec_desc">A CoreELEC minden további indításához, miután az első újraindítás egyszer megtörtént.</string>
     <string name="status_connecting">Csatlakozás az ADB-hez… Erősítse meg a hibakeresési kérést, ha megjelenik.</string>
     <string name="status_ready">Újraindításra kész</string>
+    <string name="update_available">Frissítés érhető el: %1$s verzió</string>
 </resources>

@@ -3,6 +3,10 @@ plugins {
     id 'org.jetbrains.kotlin.plugin.compose'
 }
 
+// Release signing comes from the environment (see .github/workflows/release.yml).
+// Without it, release builds are signed with the debug key so they can still be installed for testing.
+def releaseKeystore = System.getenv('RELEASE_KEYSTORE_FILE')
+
 android {
     namespace 'com.jamal2367.coreelec'
     compileSdk 37
@@ -19,11 +23,23 @@ android {
         localeFilters += ['en', 'de', 'hu']
     }
 
+    signingConfigs {
+        release {
+            if (releaseKeystore) {
+                storeFile file(releaseKeystore)
+                storePassword System.getenv('RELEASE_KEYSTORE_PASSWORD')
+                keyAlias System.getenv('RELEASE_KEY_ALIAS')
+                keyPassword System.getenv('RELEASE_KEY_PASSWORD')
+            }
+        }
+    }
+
     buildTypes {
         debug {
             applicationIdSuffix = '.debug'
         }
         release {
+            signingConfig releaseKeystore ? signingConfigs.release : signingConfigs.debug
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'

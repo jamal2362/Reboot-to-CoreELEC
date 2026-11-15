@@ -67,6 +67,7 @@ import com.jamal2367.coreelec.AdbStatus
 import com.jamal2367.coreelec.R
 import com.jamal2367.coreelec.RebootMode
 import com.jamal2367.coreelec.RebootUiState
+import com.jamal2367.coreelec.UpdateChecker
 
 /** Duration of one full turn of the shape behind the logo. */
 private const val LOGO_SHAPE_TURN_MS = 60_000
@@ -76,6 +77,7 @@ fun RebootScreen(
     uiState: RebootUiState,
     adbStatus: AdbStatus,
     deviceIp: String?,
+    availableUpdate: String?,
     onReboot: (RebootMode) -> Unit,
 ) {
     val firstAction = remember { FocusRequester() }
@@ -122,6 +124,49 @@ fun RebootScreen(
                     )
                     .padding(start = 32.dp, bottom = 24.dp),
             )
+
+            if (availableUpdate != null) {
+                UpdateNotice(
+                    version = availableUpdate,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .windowInsetsPadding(
+                            WindowInsets.safeDrawing.only(WindowInsetsSides.End + WindowInsetsSides.Bottom),
+                        )
+                        .padding(end = 48.dp, bottom = 20.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun UpdateNotice(version: String, modifier: Modifier = Modifier) {
+    val colors = MaterialTheme.colorScheme
+
+    Surface(
+        modifier = modifier,
+        shape = RoundedCornerShape(20.dp),
+        color = colors.tertiaryContainer,
+        contentColor = colors.onTertiaryContainer,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Icon(painter = painterResource(R.drawable.ic_first_boot_24), contentDescription = null)
+            Column {
+                Text(
+                    text = stringResource(R.string.update_available, version),
+                    style = MaterialTheme.typography.labelLarge,
+                )
+                Text(
+                    text = UpdateChecker.RELEASES_PAGE,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = colors.onTertiaryContainer.copy(alpha = 0.8f),
+                )
+            }
         }
     }
 }

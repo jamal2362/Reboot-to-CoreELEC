@@ -35,6 +35,28 @@ app title.
 The APK is written to `app/build/outputs/apk/debug/`. Building requires JDK 17 or newer
 and the Android SDK (platform 37).
 
+## Releases
+
+Releases are published by running the **Release** workflow manually (Actions → Release →
+Run workflow). It builds the signed release APK and uploads it to a new GitHub release
+tagged with the `versionName` from `app/build.gradle`, so raise `versionName` and
+`versionCode` first.
+
+The workflow needs these repository secrets (Settings → Secrets and variables → Actions):
+
+| Secret | Content |
+| --- | --- |
+| `RELEASE_KEYSTORE_BASE64` | The signing keystore, encoded with `base64 -w0 keystore.jks` |
+| `RELEASE_KEYSTORE_PASSWORD` | Password of the keystore |
+| `RELEASE_KEY_ALIAS` | Alias of the signing key |
+| `RELEASE_KEY_PASSWORD` | Password of the signing key |
+
+Use the same keystore as for earlier releases; otherwise the new APK cannot be installed
+over an existing installation.
+
+The app checks the latest GitHub release at start and shows a notice when a newer version
+is available.
+
 ## Translations
 
 English, German and Hungarian. Further translations are welcome: copy

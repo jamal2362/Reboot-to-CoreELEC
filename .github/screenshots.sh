@@ -5,8 +5,8 @@ mkdir -p shots
 shot() { timeout 30 adb exec-out screencap -p > "shots/$name-$1.png" || true; }
 key() { timeout 10 adb shell input keyevent "$1" || true; }
 
-adb install app/build/outputs/apk/debug/*.apk
-adb shell am start -W -n com.jamal2367.coreelec.debug/com.jamal2367.coreelec.MainActivity
+adb install app/build/outputs/apk/release/*.apk
+adb shell am start -W -n com.jamal2367.coreelec/.MainActivity
 sleep 8
 shot 1-start
 

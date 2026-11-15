@@ -41,6 +41,18 @@ class RebootViewModel(application: Application) : AndroidViewModel(application) 
     var deviceIp: String? by mutableStateOf(null)
         private set
 
+    private val updateChecker = UpdateChecker(application)
+
+    /** Version of a newer release, shown at once from the last check and then refreshed. */
+    var availableUpdate: String? by mutableStateOf(updateChecker.cachedUpdate())
+        private set
+
+    init {
+        viewModelScope.launch {
+            availableUpdate = withContext(Dispatchers.IO) { updateChecker.fetchUpdate() }
+        }
+    }
+
     /** Checks whether the local ADB daemon is reachable and looks up the device's IP address. */
     fun refreshAdbStatus() {
         viewModelScope.launch {

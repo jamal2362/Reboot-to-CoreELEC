@@ -16,4 +16,5 @@
     <string name="reboot_to_coreelec_desc">For every later start of CoreELEC, once the first reboot has been done.</string>
     <string name="status_connecting">Connecting to ADB… Confirm the debugging prompt if it appears.</string>
     <string name="status_ready">Ready to reboot</string>
+    <string name="update_available">Update available: version %1$s</string>
 </resources>

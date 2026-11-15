@@ -1,6 +1,6 @@
 name: Screenshots
 
-# Starts the debug build on emulators and uploads screenshots of the main screen.
+# Starts the release build on an emulator and uploads screenshots of the main screen.
 on:
   workflow_dispatch:
   push:
@@ -36,8 +36,12 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v5
 
+      # The minified release build is what users get, so that is what gets exercised here.
+      # An old version name makes the update notice show up in the screenshots.
       - name: Build
-        run: ./gradlew assembleDebug
+        run: |
+          sed -i "s/versionName '.*'/versionName '0.1'/" app/build.gradle
+          ./gradlew assembleRelease
 
       - name: Enable KVM
         run: |
