@@ -33,7 +33,7 @@ app title.
 ```
 
 The APK is written to `app/build/outputs/apk/debug/`. Building requires JDK 17 or newer
-and the Android SDK (platform 36).
+and the Android SDK (platform 37).
 
 ## Translations
 

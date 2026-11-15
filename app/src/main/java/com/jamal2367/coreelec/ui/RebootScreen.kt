@@ -145,14 +145,15 @@ private fun Logo() {
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun Status(uiState: RebootUiState) {
+    val motion = MaterialTheme.motionScheme
+    val enter = fadeIn(motion.defaultEffectsSpec()) +
+        scaleIn(motion.defaultSpatialSpec(), initialScale = 0.9f)
+    val exit = fadeOut(motion.fastEffectsSpec())
+
     AnimatedContent(
         targetState = uiState,
         modifier = Modifier.heightIn(min = 72.dp),
-        transitionSpec = {
-            (fadeIn(MaterialTheme.motionScheme.defaultEffectsSpec()) +
-                scaleIn(MaterialTheme.motionScheme.defaultSpatialSpec(), initialScale = 0.9f)) togetherWith
-                fadeOut(MaterialTheme.motionScheme.fastEffectsSpec())
-        },
+        transitionSpec = { enter togetherWith exit },
         contentAlignment = Alignment.Center,
         label = "status",
     ) { state ->
