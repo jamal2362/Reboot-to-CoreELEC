@@ -78,9 +78,9 @@ import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.platform.LocalWindowInfo
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
@@ -368,7 +368,7 @@ private fun BrandPane(
     val imeVisible = WindowInsets.isImeVisible
     val density = LocalDensity.current
     val imeHeight = with(density) { WindowInsets.ime.getBottom(density).toDp() }
-    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val screenHeight = with(density) { LocalWindowInfo.current.containerSize.height.toDp() }
     val keyboardRoom by animateDpAsState(
         targetValue = if (imeVisible) maxOf(imeHeight, screenHeight * KEYBOARD_SCREEN_SHARE) else 0.dp,
         animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
