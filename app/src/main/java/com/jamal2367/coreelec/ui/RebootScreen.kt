@@ -154,6 +154,8 @@ private fun UpdateNotice(
     modifier: Modifier = Modifier,
 ) {
     val colors = MaterialTheme.colorScheme
+    val source = remember { MutableInteractionSource() }
+    val focused by source.collectIsFocusedAsState()
     val canInstall = update.apkUrl != null
 
     Surface(
@@ -161,9 +163,11 @@ private fun UpdateNotice(
         modifier = modifier,
         enabled = canInstall,
         shape = RoundedCornerShape(20.dp),
-        // Same fill as the "Normal reboot" card; focus shows as the lighter state layer only.
+        // Same fill and focus outline as the "Normal reboot" card.
         color = colors.surfaceContainerHighest,
         contentColor = colors.onSurface,
+        border = if (focused) BorderStroke(2.dp, colors.onSurface) else null,
+        interactionSource = source,
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
