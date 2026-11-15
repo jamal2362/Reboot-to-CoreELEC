@@ -8,7 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
 /** The red of the CoreELEC logo. */
-val CoreElecRed = Color(0xFFE30613)
+val CoreELECRed = Color(0xFFE30613)
 
 val StatusGreen = Color(0xFF6DD58C)
 

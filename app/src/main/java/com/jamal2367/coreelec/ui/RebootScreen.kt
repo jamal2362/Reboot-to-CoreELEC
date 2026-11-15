@@ -417,7 +417,7 @@ private fun RebootAction(
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .background(if (primary) CoreElecRed else colors.surfaceContainerHigh, CircleShape),
+                    .background(if (primary) CoreELECRed else colors.surfaceContainerHigh, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
