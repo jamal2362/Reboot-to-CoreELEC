@@ -60,7 +60,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
@@ -86,6 +85,9 @@ import com.jamal2367.coreelec.UpdateUiState
 private const val LOGO_SHAPE_TURN_MS = 60_000
 private const val TERMINAL_CURSOR_BLINK_MS = 1_000
 
+/** Widest the terminal window gets; the update notice below it matches. */
+private val TERMINAL_MAX_WIDTH = 380.dp
+
 /** How much a focused button grows. */
 private const val FOCUS_SCALE = 1.03f
 
@@ -110,13 +112,14 @@ fun RebootScreen(
     onOpenDeveloperSettings: () -> Unit,
 ) {
     val firstAction = remember { FocusRequester() }
-    val secondAction = remember { FocusRequester() }
 
     // ADB is off (found at start or by a failed attempt): offer the way to switch it on,
-    // as long as the developer options can be opened.
+    // as long as the developer options can be opened. An installable update comes first:
+    // until it is installed, its notice is shown instead of the developer options button.
     val adbOff = adbStatus == AdbStatus.UNREACHABLE ||
         (uiState is RebootUiState.Failed && uiState.messageRes == R.string.error_adb_unreachable)
-    val showDeveloperSettings = developerOptionsEnabled && !uiState.isBusy && adbOff
+    val updateFirst = availableUpdate?.apkUrl != null
+    val showDeveloperSettings = developerOptionsEnabled && !uiState.isBusy && adbOff && !updateFirst
 
     // Put D-pad focus on the main action at start and whenever the actions become usable again,
     // unless the developer options button is shown: that one takes focus itself.
@@ -135,6 +138,9 @@ fun RebootScreen(
             ) {
                 BrandPane(
                     log = log,
+                    update = availableUpdate,
+                    updateState = updateState,
+                    onInstallUpdate = onInstallUpdate,
                     showDeveloperSettings = showDeveloperSettings,
                     onOpenDeveloperSettings = onOpenDeveloperSettings,
                     modifier = Modifier
@@ -148,7 +154,6 @@ fun RebootScreen(
                     enabled = !uiState.isBusy,
                     onReboot = onReboot,
                     firstAction = firstAction,
-                    secondAction = secondAction,
                     modifier = Modifier
                         .fillMaxSize()
                         .background(
@@ -162,29 +167,16 @@ fun RebootScreen(
                 )
             }
 
-            // Bottom right: the update notice (if any) above the ADB status line.
-            Column(
+            AdbStatusLine(
+                status = adbStatus,
+                deviceIp = deviceIp,
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .windowInsetsPadding(
                         WindowInsets.safeDrawing.only(WindowInsetsSides.End + WindowInsetsSides.Bottom),
                     )
                     .padding(end = 48.dp, bottom = 24.dp),
-                horizontalAlignment = Alignment.End,
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                if (availableUpdate != null) {
-                    UpdateNotice(
-                        update = availableUpdate,
-                        state = updateState,
-                        onInstall = onInstallUpdate,
-                        // The cards' scrolling column reaches down behind this notice, so the
-                        // D-pad search does not see the cards as "above" it: point Up at them.
-                        modifier = Modifier.focusProperties { up = secondAction },
-                    )
-                }
-                AdbStatusLine(status = adbStatus, deviceIp = deviceIp)
-            }
+            )
         }
     }
 }
@@ -214,8 +206,8 @@ private fun UpdateNotice(
             .focusScale(focused),
         enabled = canInstall,
         shape = RoundedCornerShape(20.dp),
-        // Same fill as the reboot cards and the ADB status box; lighter while focused.
-        color = focusColor(focused, colors.surfaceContainerLow),
+        // Same fill as the developer options button next to it (the cookie colour behind the logo).
+        color = focusColor(focused, colors.surfaceContainerHigh),
         contentColor = colors.onSurface,
         interactionSource = source,
     ) {
@@ -303,6 +295,9 @@ private fun AdbStatusLine(status: AdbStatus, deviceIp: String?, modifier: Modifi
 @Composable
 private fun BrandPane(
     log: List<LogLine>,
+    update: UpdateInfo?,
+    updateState: UpdateUiState,
+    onInstallUpdate: () -> Unit,
     showDeveloperSettings: Boolean,
     onOpenDeveloperSettings: () -> Unit,
     modifier: Modifier = Modifier,
@@ -359,6 +354,23 @@ private fun BrandPane(
 
         Terminal(log, modifier = Modifier.weight(1f))
 
+        // Below the terminal, where the developer options button goes as well. Like that button,
+        // without the invisible 48 dp touch margin, so its bottom edge lines up with the ADB box.
+        if (update != null) {
+            Spacer(Modifier.height(14.dp))
+            CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+                UpdateNotice(
+                    update = update,
+                    state = updateState,
+                    onInstall = onInstallUpdate,
+                    // As wide as the terminal above it.
+                    modifier = Modifier
+                        .widthIn(max = TERMINAL_MAX_WIDTH)
+                        .fillMaxWidth(),
+                )
+            }
+        }
+
         DeveloperSettings(visible = showDeveloperSettings, onClick = onOpenDeveloperSettings)
     }
 }
@@ -384,7 +396,7 @@ private fun Terminal(lines: List<LogLine>, modifier: Modifier = Modifier) {
 
     Surface(
         modifier = Modifier
-            .widthIn(max = 380.dp)
+            .widthIn(max = TERMINAL_MAX_WIDTH)
             .fillMaxWidth()
             .then(modifier),
         shape = RoundedCornerShape(16.dp),
@@ -490,7 +502,6 @@ private fun ActionsPane(
     enabled: Boolean,
     onReboot: (RebootMode) -> Unit,
     firstAction: FocusRequester,
-    secondAction: FocusRequester,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -515,7 +526,6 @@ private fun ActionsPane(
             primary = false,
             enabled = enabled,
             onReboot = onReboot,
-            modifier = Modifier.focusRequester(secondAction),
         )
     }
 }
