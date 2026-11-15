@@ -93,14 +93,19 @@ fun RebootScreen(
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
         Box {
-            Row(Modifier.fillMaxSize()) {
+            // The brand pane's colour fills the whole row; the actions pane sits on top of it
+            // with rounded corners at the top and bottom where the two halves meet.
+            Row(
+                Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.surfaceContainerLow),
+            ) {
                 BrandPane(
                     uiState = uiState,
                     adbReady = adbStatus == AdbStatus.READY,
                     modifier = Modifier
                         .fillMaxHeight()
                         .fillMaxWidth(0.42f)
-                        .background(MaterialTheme.colorScheme.surfaceContainerLow)
                         .windowInsetsPadding(
                             WindowInsets.safeDrawing.only(WindowInsetsSides.Start + WindowInsetsSides.Vertical),
                         ),
@@ -111,6 +116,10 @@ fun RebootScreen(
                     firstAction = firstAction,
                     modifier = Modifier
                         .fillMaxSize()
+                        .background(
+                            MaterialTheme.colorScheme.background,
+                            RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp),
+                        )
                         .windowInsetsPadding(
                             WindowInsets.safeDrawing.only(WindowInsetsSides.End + WindowInsetsSides.Vertical),
                         )
