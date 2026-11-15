@@ -435,13 +435,22 @@ private fun Terminal(lines: List<LogLine>, modifier: Modifier = Modifier) {
                     Text(text = text, style = textStyle, color = color)
                 }
             }
+            // The prompt waiting for the next command: "$ _" with a blinking cursor.
             item {
-                Text(
-                    text = "_",
-                    modifier = Modifier.alpha(cursorAlpha),
-                    style = textStyle,
-                    color = colors.onSurfaceVariant,
-                )
+                Row {
+                    Text(
+                        text = "$",
+                        modifier = Modifier.width(TERMINAL_MARKER_WIDTH),
+                        style = textStyle,
+                        color = colors.onSurface,
+                    )
+                    Text(
+                        text = "_",
+                        modifier = Modifier.alpha(cursorAlpha),
+                        style = textStyle,
+                        color = colors.onSurface,
+                    )
+                }
             }
         }
     }
