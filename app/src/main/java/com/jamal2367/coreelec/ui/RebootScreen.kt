@@ -416,7 +416,7 @@ private fun BrandPane(
                             ),
                     )
                     Image(
-                        painter = painterResource(R.drawable.coreelec),
+                        painter = painterResource(R.drawable.ic_coreelec),
                         contentDescription = null,
                         modifier = Modifier.size(logoSize * 0.64f),
                     )
