@@ -18,8 +18,8 @@ val StatusGreen = Color(0xFF6DD58C)
 
 val StatusRed = Color(0xFFF2564B)
 
-/** Fill of a focused button or card: clearly lighter than every unfocused fill. */
-val FocusContainer = Color(0xFF424762)
+/** Fill of a focused button or card: the colour of the cookie shape behind the logo (surfaceContainerHigh). */
+val FocusContainer = Color(0xFF2A2D3C)
 
 // Always dark: the app is made for TV boxes. Tones are derived from the CoreELEC red.
 private val ColorScheme = darkColorScheme(

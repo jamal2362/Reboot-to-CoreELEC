@@ -266,11 +266,11 @@ private fun AdbStatusLine(status: AdbStatus, deviceIp: String?, modifier: Modifi
         },
     )
 
-    // A box like the update notice above it, so both read as one group.
+    // Same fill as the reboot cards (e.g. "First reboot") when they are not focused.
     Surface(
         modifier = modifier,
         shape = RoundedCornerShape(20.dp),
-        color = colors.surfaceContainer,
+        color = colors.surfaceContainerLow,
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
@@ -548,7 +548,7 @@ private fun RebootAction(
             .alpha(if (enabled) 1f else 0.5f),
         enabled = enabled,
         shape = RoundedCornerShape(corner),
-        color = focusColor(focused, colors.surfaceContainer),
+        color = focusColor(focused, colors.surfaceContainerLow),
         contentColor = colors.onSurface,
         interactionSource = source,
     ) {
@@ -559,7 +559,7 @@ private fun RebootAction(
             Box(
                 modifier = Modifier
                     .size(48.dp)
-                    .background(if (primary) CoreELECRed else colors.surfaceContainerHigh, CircleShape),
+                    .background(if (primary) CoreELECRed else colors.surfaceContainerHighest, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
                 Icon(
@@ -604,7 +604,7 @@ private fun Modifier.focusScale(focused: Boolean): Modifier {
     }
 }
 
-/** The fill of a button: [base] normally, the lighter [FocusContainer] while focused. */
+/** The fill of a button: [base] normally, [FocusContainer] while focused. */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun focusColor(focused: Boolean, base: Color): Color {
