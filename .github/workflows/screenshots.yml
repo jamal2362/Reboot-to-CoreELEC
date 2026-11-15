@@ -3,8 +3,6 @@ name: Screenshots
 # Starts the debug build on emulators and uploads screenshots of the main screen.
 on:
   workflow_dispatch:
-  push:
-    branches: [ccr-a4837c9a-ins0df]
 
 permissions:
   contents: read
