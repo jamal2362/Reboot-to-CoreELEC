@@ -214,8 +214,8 @@ private fun UpdateNotice(
             .focusScale(focused),
         enabled = canInstall,
         shape = RoundedCornerShape(20.dp),
-        // Same fill as the "First reboot" card; lighter while focused, like all buttons.
-        color = focusColor(focused, colors.surfaceContainer),
+        // Same fill as the reboot cards and the ADB status box; lighter while focused.
+        color = focusColor(focused, colors.surfaceContainerLow),
         contentColor = colors.onSurface,
         interactionSource = source,
     ) {
