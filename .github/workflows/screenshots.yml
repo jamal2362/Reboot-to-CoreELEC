@@ -1,0 +1,66 @@
+name: Screenshots
+
+# Starts the release build on an emulator and uploads screenshots of the main screen.
+on:
+  workflow_dispatch:
+  push:
+    branches-ignore: [main]
+    paths:
+      - 'app/**'
+      - '.github/screenshots.sh'
+      - '.github/workflows/screenshots.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  screenshots:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: tv
+            api: 34
+            target: android-tv
+            arch: x86
+            profile: tv_1080p
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v5
+
+      # The minified release build is what users get, so that is what gets exercised here.
+      # An old version name makes the update notice show up in the screenshots.
+      - name: Build
+        run: |
+          sed -i "s/versionName '.*'/versionName '0.1'/" app/build.gradle
+          ./gradlew assembleRelease
+
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+
+      - name: Take screenshots
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          target: ${{ matrix.target }}
+          arch: ${{ matrix.arch }}
+          profile: ${{ matrix.profile }}
+          disable-animations: false
+          script: .github/screenshots.sh ${{ matrix.name }}
+
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: screenshots-${{ matrix.name }}
+          path: shots/

@@ -1,0 +1,64 @@
+name: Release
+
+# Run manually: builds the signed release APK and publishes it as a GitHub release
+# tagged with the versionName from app/build.gradle.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Read version
+        id: version
+        run: |
+          version=$(sed -n "s/.*versionName '\\(.*\\)'.*/\\1/p" app/build.gradle)
+          if [ -z "$version" ]; then
+            echo "::error::Could not read versionName from app/build.gradle"
+            exit 1
+          fi
+          if git ls-remote --exit-code --tags origin "refs/tags/$version" > /dev/null; then
+            echo "::error::Release $version already exists. Raise versionName and versionCode in app/build.gradle first."
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare signing key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::error::Secret RELEASE_KEYSTORE_BASE64 is missing. See the README section on releases."
+            exit 1
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.jks"
+
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: gradle/actions/setup-gradle@v5
+
+      - name: Build release APK
+        env:
+          RELEASE_KEYSTORE_FILE: ${{ runner.temp }}/release.jks
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: ./gradlew assembleRelease
+
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release create "$VERSION" app/build/outputs/apk/release/*.apk \
+            --title "Reboot to CoreELEC $VERSION" \
+            --target "$GITHUB_SHA" \
+            --generate-notes
