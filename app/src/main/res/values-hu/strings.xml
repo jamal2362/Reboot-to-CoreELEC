@@ -17,4 +17,9 @@
     <string name="status_connecting">Csatlakozás az ADB-hez… Erősítse meg a hibakeresési kérést, ha megjelenik.</string>
     <string name="status_ready">Újraindításra kész</string>
     <string name="update_available">Frissítés érhető el: %1$s verzió</string>
+    <string name="update_downloading">Frissítés letöltése…</string>
+    <string name="update_downloading_percent">Frissítés letöltése… %1$d%%</string>
+    <string name="update_failed">A frissítés sikertelen: %1$s</string>
+    <string name="update_installing">Telepítés indítása…</string>
+    <string name="update_press_to_install">Nyomja meg az OK gombot a letöltéshez és telepítéshez</string>
 </resources>

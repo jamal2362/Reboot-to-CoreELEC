@@ -35,6 +35,8 @@ class MainActivity : ComponentActivity() {
                     adbStatus = viewModel.adbStatus,
                     deviceIp = viewModel.deviceIp,
                     availableUpdate = viewModel.availableUpdate,
+                    updateState = viewModel.updateState,
+                    onInstallUpdate = viewModel::installUpdate,
                     onReboot = viewModel::reboot,
                 )
             }

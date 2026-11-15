@@ -54,8 +54,9 @@ The workflow needs these repository secrets (Settings → Secrets and variables 
 Use the same keystore as for earlier releases; otherwise the new APK cannot be installed
 over an existing installation.
 
-The app checks the latest GitHub release at start and shows a notice when a newer version
-is available.
+The app checks the latest GitHub release at start and shows a button when a newer version
+is available. Pressing it downloads the APK from the release and hands it to the system's
+package installer.
 
 ## Translations
 

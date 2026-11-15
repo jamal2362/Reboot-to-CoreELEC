@@ -17,4 +17,9 @@
     <string name="status_connecting">Connecting to ADB… Confirm the debugging prompt if it appears.</string>
     <string name="status_ready">Ready to reboot</string>
     <string name="update_available">Update available: version %1$s</string>
+    <string name="update_downloading">Downloading update…</string>
+    <string name="update_downloading_percent">Downloading update… %1$d%%</string>
+    <string name="update_failed">Update failed: %1$s</string>
+    <string name="update_installing">Starting installation…</string>
+    <string name="update_press_to_install">Press OK to download and install</string>
 </resources>

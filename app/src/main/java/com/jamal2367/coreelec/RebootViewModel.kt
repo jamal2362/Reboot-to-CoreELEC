@@ -43,9 +43,32 @@ class RebootViewModel(application: Application) : AndroidViewModel(application) 
 
     private val updateChecker = UpdateChecker(application)
 
-    /** Version of a newer release, shown at once from the last check and then refreshed. */
-    var availableUpdate: String? by mutableStateOf(updateChecker.cachedUpdate())
+    private val updateInstaller = UpdateInstaller(application)
+
+    /** A newer release, shown at once from the last check and then refreshed. */
+    var availableUpdate: UpdateInfo? by mutableStateOf(updateChecker.cachedUpdate())
         private set
+
+    val updateState: UpdateUiState
+        get() = UpdateStatus.state
+
+    /** Downloads the update and hands it to the system's package installer. */
+    fun installUpdate() {
+        val apkUrl = availableUpdate?.apkUrl ?: return
+        if (UpdateStatus.state.isBusy) return
+        UpdateStatus.state = UpdateUiState.Downloading(null)
+
+        viewModelScope.launch {
+            try {
+                withContext(Dispatchers.IO) { updateInstaller.downloadAndInstall(apkUrl) }
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e(TAG, "Update failed", e)
+                UpdateStatus.state = UpdateUiState.Failed(e.localizedMessage ?: e.javaClass.simpleName)
+            }
+        }
+    }
 
     init {
         viewModelScope.launch {

@@ -13,6 +13,20 @@ shot 1-start
 key DPAD_DOWN
 sleep 2
 shot 2-second-focused
+
+# Update button: download the latest release and wait for the system's install prompt.
+key DPAD_DOWN
+sleep 2
+shot 2a-update-focused
+key DPAD_CENTER
+sleep 1
+shot 2b-update-started
+sleep 12
+shot 2c-update-prompt
+key BACK
+sleep 3
+shot 2d-after-prompt
+key DPAD_UP
 key DPAD_UP
 sleep 1
 
@@ -24,5 +38,5 @@ shot 4-after-5s
 sleep 15
 shot 5-after-20s
 
-timeout 20 adb logcat -d -s AdbRebooter:V RebootViewModel:V AndroidRuntime:E > "shots/$name-logcat.txt" || true
+timeout 20 adb logcat -d -s AdbRebooter:V RebootViewModel:V UpdateChecker:V InstallResultReceiver:V AndroidRuntime:E > "shots/$name-logcat.txt" || true
 exit 0

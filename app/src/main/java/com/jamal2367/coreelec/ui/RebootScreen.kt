@@ -68,6 +68,8 @@ import com.jamal2367.coreelec.R
 import com.jamal2367.coreelec.RebootMode
 import com.jamal2367.coreelec.RebootUiState
 import com.jamal2367.coreelec.UpdateChecker
+import com.jamal2367.coreelec.UpdateInfo
+import com.jamal2367.coreelec.UpdateUiState
 
 /** Duration of one full turn of the shape behind the logo. */
 private const val LOGO_SHAPE_TURN_MS = 60_000
@@ -77,8 +79,10 @@ fun RebootScreen(
     uiState: RebootUiState,
     adbStatus: AdbStatus,
     deviceIp: String?,
-    availableUpdate: String?,
+    availableUpdate: UpdateInfo?,
+    updateState: UpdateUiState,
     onReboot: (RebootMode) -> Unit,
+    onInstallUpdate: () -> Unit,
 ) {
     val firstAction = remember { FocusRequester() }
 
@@ -127,7 +131,9 @@ fun RebootScreen(
 
             if (availableUpdate != null) {
                 UpdateNotice(
-                    version = availableUpdate,
+                    update = availableUpdate,
+                    state = updateState,
+                    onInstall = onInstallUpdate,
                     modifier = Modifier
                         .align(Alignment.BottomEnd)
                         .windowInsetsPadding(
@@ -141,14 +147,26 @@ fun RebootScreen(
 }
 
 @Composable
-private fun UpdateNotice(version: String, modifier: Modifier = Modifier) {
+private fun UpdateNotice(
+    update: UpdateInfo,
+    state: UpdateUiState,
+    onInstall: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val colors = MaterialTheme.colorScheme
+    val source = remember { MutableInteractionSource() }
+    val focused by source.collectIsFocusedAsState()
+    val canInstall = update.apkUrl != null
 
     Surface(
+        onClick = onInstall,
         modifier = modifier,
+        enabled = canInstall,
         shape = RoundedCornerShape(20.dp),
         color = colors.tertiaryContainer,
         contentColor = colors.onTertiaryContainer,
+        border = if (focused) BorderStroke(2.dp, colors.onSurface) else null,
+        interactionSource = source,
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
@@ -158,13 +176,27 @@ private fun UpdateNotice(version: String, modifier: Modifier = Modifier) {
             Icon(painter = painterResource(R.drawable.ic_first_boot_24), contentDescription = null)
             Column {
                 Text(
-                    text = stringResource(R.string.update_available, version),
+                    text = stringResource(R.string.update_available, update.version),
                     style = MaterialTheme.typography.labelLarge,
                 )
                 Text(
-                    text = UpdateChecker.RELEASES_PAGE,
+                    text = when {
+                        !canInstall -> UpdateChecker.RELEASES_PAGE
+                        state is UpdateUiState.Downloading && state.percent != null ->
+                            stringResource(R.string.update_downloading_percent, state.percent)
+                        state is UpdateUiState.Downloading -> stringResource(R.string.update_downloading)
+                        state is UpdateUiState.Installing -> stringResource(R.string.update_installing)
+                        state is UpdateUiState.Failed ->
+                            stringResource(R.string.update_failed, state.message.orEmpty())
+                        else -> stringResource(R.string.update_press_to_install)
+                    },
+                    modifier = Modifier.widthIn(max = 360.dp),
                     style = MaterialTheme.typography.bodySmall,
-                    color = colors.onTertiaryContainer.copy(alpha = 0.8f),
+                    color = if (state is UpdateUiState.Failed) {
+                        colors.error
+                    } else {
+                        colors.onTertiaryContainer.copy(alpha = 0.8f)
+                    },
                 )
             }
         }
