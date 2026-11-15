@@ -37,6 +37,9 @@ enum class RebootMode(
     ),
 }
 
+/** Progress of a [AdbRebooter.reboot] call, in the order it happens. */
+enum class RebootStep { CONNECTED, AUTHENTICATING, AUTHORIZED, COMMAND_SENT }
+
 /** The user did not confirm the "Allow USB debugging?" prompt in time. */
 class NotAuthorizedException : IOException()
 
@@ -56,21 +59,23 @@ class AdbRebooter(private val keyDir: File) {
     private var authRejected = false
 
     /**
-     * Connects, authorizes and sends [mode]'s command. [onAuthorized] is called once the
-     * connection is established, shortly before the command is sent.
+     * Connects, authorizes and sends [mode]'s command, reporting each [RebootStep] to [onStep]
+     * (on the calling thread). [RebootStep.AUTHORIZED] comes shortly before the command is sent.
      *
      * Only returns by throwing: on success the system kills the app during shutdown.
      */
     @Throws(IOException::class, InterruptedException::class)
-    fun reboot(mode: RebootMode, onAuthorized: () -> Unit): Nothing {
+    fun reboot(mode: RebootMode, onStep: (RebootStep) -> Unit): Nothing {
         val crypto = loadOrCreateCrypto()
         authRejected = false
 
         Socket().use { socket ->
             this.socket = socket
             socket.connect(InetSocketAddress(ADB_HOST, ADB_PORT), CONNECT_TIMEOUT_MS)
+            onStep(RebootStep.CONNECTED)
 
             AdbConnection.create(socket, crypto).use { connection ->
+                onStep(RebootStep.AUTHENTICATING)
                 // Blocks while the user confirms the "Allow USB debugging?" prompt.
                 // adbd stays silent when the prompt is denied, so a rejection either runs into
                 // the timeout or is cut short by [abortAuthorization].
@@ -82,12 +87,13 @@ class AdbRebooter(private val keyDir: File) {
                 }
                 if (!authorized || authRejected) throw NotAuthorizedException()
 
-                onAuthorized()
+                onStep(RebootStep.AUTHORIZED)
                 // Give the user a moment to read the status before the screen goes dark.
                 Thread.sleep(STATUS_DELAY_MS)
 
                 val stream = connection.open(mode.command)
                 Log.d(TAG, "Sent \"${mode.command}\"")
+                onStep(RebootStep.COMMAND_SENT)
 
                 // Keep the shell alive until the device goes down or the command returns.
                 try {

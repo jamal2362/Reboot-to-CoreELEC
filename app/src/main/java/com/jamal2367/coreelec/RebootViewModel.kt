@@ -4,6 +4,7 @@ import android.app.Application
 import android.util.Log
 import androidx.annotation.StringRes
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
@@ -52,6 +53,14 @@ class RebootViewModel(application: Application) : AndroidViewModel(application) 
 
     var deviceIp: String? by mutableStateOf(null)
         private set
+
+    private val _log = mutableStateListOf<LogLine>()
+
+    /** What the terminal window shows, oldest line first. */
+    val log: List<LogLine> get() = _log
+
+    /** The last probe result written to the log, so that unchanged results are not repeated. */
+    private var loggedProbe: AdbStatus? = null
 
     /** Whether the developer options are unlocked on the device; set by the activity. */
     var developerOptionsEnabled: Boolean by mutableStateOf(false)
@@ -105,6 +114,18 @@ class RebootViewModel(application: Application) : AndroidViewModel(application) 
             deviceIp = ip
             // A reboot that started meanwhile knows better (see [reboot]).
             if (!uiState.isBusy) adbStatus = status
+            if (status != loggedProbe) {
+                loggedProbe = status
+                log(LogLine.command("adb devices"))
+                log(
+                    when (status) {
+                        AdbStatus.READY -> LogLine(LogKind.SUCCESS, text = "$ADB_ADDRESS device")
+                        AdbStatus.NEEDS_AUTH -> LogLine(LogKind.WARNING, text = "$ADB_ADDRESS unauthorized")
+                        else -> LogLine(LogKind.ERROR, R.string.log_unreachable, listOf(AdbRebooter.ADB_PORT))
+                    },
+                )
+                if (status == AdbStatus.UNREACHABLE) log(LogLine(LogKind.HINT, R.string.log_hint_enable_debugging))
+            }
         }
     }
 
@@ -115,6 +136,7 @@ class RebootViewModel(application: Application) : AndroidViewModel(application) 
     fun onWindowFocusChanged(hasFocus: Boolean) {
         if (uiState != RebootUiState.Connecting) return
         if (!hasFocus) {
+            if (!promptShown) log(LogLine(LogKind.WARNING, R.string.log_prompt_shown))
             promptShown = true
             promptDismissedJob?.cancel()
         } else if (promptShown) {
@@ -134,31 +156,58 @@ class RebootViewModel(application: Application) : AndroidViewModel(application) 
         uiState = RebootUiState.Connecting
         promptShown = false
         promptDismissedJob?.cancel()
+        log(LogLine.command("adb connect $ADB_ADDRESS"))
 
         viewModelScope.launch {
             uiState = try {
                 runInterruptible(Dispatchers.IO) {
-                    rebooter.reboot(mode) {
-                        adbStatus = AdbStatus.READY
-                        uiState = RebootUiState.Rebooting(mode)
+                    rebooter.reboot(mode) { step ->
+                        when (step) {
+                            RebootStep.CONNECTED -> log(LogLine(LogKind.INFO, R.string.log_connected))
+                            RebootStep.AUTHENTICATING -> log(LogLine(LogKind.INFO, R.string.log_authenticating))
+                            RebootStep.AUTHORIZED -> {
+                                adbStatus = AdbStatus.READY
+                                uiState = RebootUiState.Rebooting(mode)
+                                log(LogLine(LogKind.SUCCESS, R.string.log_authorized))
+                                log(LogLine.command("adb " + mode.command.replace("shell:", "shell ")))
+                            }
+                            RebootStep.COMMAND_SENT -> log(LogLine(LogKind.INFO, R.string.log_command_sent))
+                        }
                     }
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: NotAuthorizedException) {
                 adbStatus = AdbStatus.NEEDS_AUTH
+                log(LogLine(LogKind.ERROR, R.string.log_not_authorized))
+                log(LogLine(LogKind.HINT, R.string.log_hint_confirm_prompt))
                 RebootUiState.Failed(R.string.error_not_authorized)
             } catch (e: NoRebootException) {
+                log(LogLine(LogKind.ERROR, R.string.log_no_reboot))
                 RebootUiState.Failed(R.string.error_no_reboot)
             } catch (e: ConnectException) {
+                log(LogLine(LogKind.ERROR, R.string.log_unreachable, listOf(AdbRebooter.ADB_PORT)))
+                log(LogLine(LogKind.HINT, R.string.log_hint_enable_debugging))
                 RebootUiState.Failed(R.string.error_adb_unreachable, AdbRebooter.ADB_PORT)
             } catch (e: SocketTimeoutException) {
+                log(LogLine(LogKind.ERROR, R.string.log_unreachable, listOf(AdbRebooter.ADB_PORT)))
+                log(LogLine(LogKind.HINT, R.string.log_hint_enable_debugging))
                 RebootUiState.Failed(R.string.error_adb_unreachable, AdbRebooter.ADB_PORT)
             } catch (e: Exception) {
                 Log.e(TAG, "Reboot failed", e)
-                RebootUiState.Failed(R.string.error_generic, e.localizedMessage ?: e.javaClass.simpleName)
+                val message = e.localizedMessage ?: e.javaClass.simpleName
+                log(LogLine(LogKind.ERROR, text = message))
+                RebootUiState.Failed(R.string.error_generic, message)
             }
             refreshAdbStatus()
+        }
+    }
+
+    /** Adds a line to the terminal window; safe to call from any thread, keeps the call order. */
+    private fun log(line: LogLine) {
+        viewModelScope.launch(Dispatchers.Main) {
+            _log += line
+            if (_log.size > MAX_LOG_LINES) _log.removeRange(0, _log.size - MAX_LOG_LINES)
         }
     }
 
@@ -169,5 +218,7 @@ class RebootViewModel(application: Application) : AndroidViewModel(application) 
     private companion object {
         const val TAG = "RebootViewModel"
         const val PROMPT_ANSWER_GRACE_MS = 750L
+        const val MAX_LOG_LINES = 50
+        val ADB_ADDRESS = "127.0.0.1:${AdbRebooter.ADB_PORT}"
     }
 }

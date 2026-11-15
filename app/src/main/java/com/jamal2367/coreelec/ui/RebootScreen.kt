@@ -1,16 +1,16 @@
 package com.jamal2367.coreelec.ui
 
-import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.togetherWith
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -35,13 +35,15 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -60,10 +62,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.jamal2367.coreelec.AdbStatus
+import com.jamal2367.coreelec.LogKind
+import com.jamal2367.coreelec.LogLine
 import com.jamal2367.coreelec.R
 import com.jamal2367.coreelec.RebootMode
 import com.jamal2367.coreelec.RebootUiState
@@ -73,6 +78,13 @@ import com.jamal2367.coreelec.UpdateUiState
 
 /** Duration of one full turn of the shape behind the logo. */
 private const val LOGO_SHAPE_TURN_MS = 60_000
+private const val TERMINAL_CURSOR_BLINK_MS = 1_000
+
+/** Column for the line markers ($, ✓, i, …), about two monospace characters wide. */
+private val TERMINAL_MARKER_WIDTH = 16.dp
+
+/** Room for eight lines of the terminal window. */
+private val TERMINAL_HEIGHT = 152.dp
 
 @Composable
 fun RebootScreen(
@@ -82,15 +94,18 @@ fun RebootScreen(
     availableUpdate: UpdateInfo?,
     updateState: UpdateUiState,
     onReboot: (RebootMode) -> Unit,
+    log: List<LogLine>,
     onInstallUpdate: () -> Unit,
     developerOptionsEnabled: Boolean,
     onOpenDeveloperSettings: () -> Unit,
 ) {
     val firstAction = remember { FocusRequester() }
 
-    // ADB is off: offer the way to switch it on, as long as the developer options can be opened.
-    val showDeveloperSettings = developerOptionsEnabled &&
-        uiState is RebootUiState.Failed && uiState.messageRes == R.string.error_adb_unreachable
+    // ADB is off (found at start or by a failed attempt): offer the way to switch it on,
+    // as long as the developer options can be opened.
+    val adbOff = adbStatus == AdbStatus.UNREACHABLE ||
+        (uiState is RebootUiState.Failed && uiState.messageRes == R.string.error_adb_unreachable)
+    val showDeveloperSettings = developerOptionsEnabled && !uiState.isBusy && adbOff
 
     // Put D-pad focus on the main action at start and whenever the actions become usable again,
     // unless the developer options button is shown: that one takes focus itself.
@@ -108,8 +123,7 @@ fun RebootScreen(
                     .background(MaterialTheme.colorScheme.surfaceContainerLow),
             ) {
                 BrandPane(
-                    uiState = uiState,
-                    adbReady = adbStatus == AdbStatus.READY || adbStatus == AdbStatus.NEEDS_AUTH,
+                    log = log,
                     showDeveloperSettings = showDeveloperSettings,
                     onOpenDeveloperSettings = onOpenDeveloperSettings,
                     modifier = Modifier
@@ -136,29 +150,25 @@ fun RebootScreen(
                 )
             }
 
-            AdbStatusLine(
-                status = adbStatus,
-                deviceIp = deviceIp,
+            // Bottom right: the update notice (if any) above the ADB status line.
+            Column(
                 modifier = Modifier
-                    .align(Alignment.BottomStart)
+                    .align(Alignment.BottomEnd)
                     .windowInsetsPadding(
-                        WindowInsets.safeDrawing.only(WindowInsetsSides.Start + WindowInsetsSides.Bottom),
+                        WindowInsets.safeDrawing.only(WindowInsetsSides.End + WindowInsetsSides.Bottom),
                     )
-                    .padding(start = 32.dp, bottom = 24.dp),
-            )
-
-            if (availableUpdate != null) {
-                UpdateNotice(
-                    update = availableUpdate,
-                    state = updateState,
-                    onInstall = onInstallUpdate,
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .windowInsetsPadding(
-                            WindowInsets.safeDrawing.only(WindowInsetsSides.End + WindowInsetsSides.Bottom),
-                        )
-                        .padding(end = 48.dp, bottom = 20.dp),
-                )
+                    .padding(end = 48.dp, bottom = 24.dp),
+                horizontalAlignment = Alignment.End,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                if (availableUpdate != null) {
+                    UpdateNotice(
+                        update = availableUpdate,
+                        state = updateState,
+                        onInstall = onInstallUpdate,
+                    )
+                }
+                AdbStatusLine(status = adbStatus, deviceIp = deviceIp)
             }
         }
     }
@@ -175,10 +185,16 @@ private fun UpdateNotice(
     val source = remember { MutableInteractionSource() }
     val focused by source.collectIsFocusedAsState()
     val canInstall = update.apkUrl != null
+    val focusRequester = remember { FocusRequester() }
+
+    // A new version is the most interesting thing on screen: OK should install it right away.
+    LaunchedEffect(canInstall) {
+        if (canInstall) focusRequester.requestFocus()
+    }
 
     Surface(
         onClick = onInstall,
-        modifier = modifier,
+        modifier = modifier.focusRequester(focusRequester),
         enabled = canInstall,
         shape = RoundedCornerShape(20.dp),
         // Same fill and focus outline as the "Normal reboot" card.
@@ -263,8 +279,7 @@ private fun AdbStatusLine(status: AdbStatus, deviceIp: String?, modifier: Modifi
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun BrandPane(
-    uiState: RebootUiState,
-    adbReady: Boolean,
+    log: List<LogLine>,
     showDeveloperSettings: Boolean,
     onOpenDeveloperSettings: () -> Unit,
     modifier: Modifier = Modifier,
@@ -305,69 +320,96 @@ private fun BrandPane(
             textAlign = TextAlign.Center,
         )
 
-        Spacer(Modifier.height(10.dp))
-        Status(uiState, adbReady, showDeveloperSettings, onOpenDeveloperSettings)
+        Spacer(Modifier.height(14.dp))
+        Terminal(log)
+
+        DeveloperSettings(visible = showDeveloperSettings, onClick = onOpenDeveloperSettings)
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+/** A small terminal window: the ADB steps scroll in from the bottom, under a blinking cursor. */
 @Composable
-private fun Status(
-    uiState: RebootUiState,
-    adbReady: Boolean,
-    showDeveloperSettings: Boolean,
-    onOpenDeveloperSettings: () -> Unit,
-) {
-    val motion = MaterialTheme.motionScheme
-    val enter = fadeIn(motion.defaultEffectsSpec()) +
-        scaleIn(motion.defaultSpatialSpec(), initialScale = 0.9f)
-    val exit = fadeOut(motion.fastEffectsSpec())
+private fun Terminal(lines: List<LogLine>) {
+    val colors = MaterialTheme.colorScheme
+    val listState = rememberLazyListState()
+    val textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace)
 
-    AnimatedContent(
-        targetState = uiState,
-        transitionSpec = { enter togetherWith exit },
-        contentAlignment = Alignment.Center,
-        label = "status",
-    ) { state ->
-        Column(
-            modifier = Modifier.widthIn(max = 320.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+    // Keep the newest line (and the cursor after it) in view.
+    LaunchedEffect(lines.size) {
+        listState.animateScrollToItem(lines.size)
+    }
+
+    val cursorAlpha by rememberInfiniteTransition(label = "cursor").animateFloat(
+        initialValue = 1f,
+        targetValue = 0f,
+        animationSpec = infiniteRepeatable(tween(TERMINAL_CURSOR_BLINK_MS, easing = { if (it < 0.5f) 0f else 1f })),
+        label = "cursorAlpha",
+    )
+
+    Surface(
+        modifier = Modifier
+            .widthIn(max = 380.dp)
+            .fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        color = colors.surfaceContainerLowest,
+    ) {
+        LazyColumn(
+            state = listState,
+            modifier = Modifier
+                .height(TERMINAL_HEIGHT)
+                .padding(horizontal = 14.dp, vertical = 10.dp),
+            userScrollEnabled = false,
         ) {
-            if (state.isBusy) {
-                // Same colour as the focus outline of the cards.
-                LoadingIndicator(
-                    modifier = Modifier.size(40.dp),
-                    color = MaterialTheme.colorScheme.outline,
+            items(lines) { line ->
+                val text = line.text ?: stringResource(line.textRes, *line.args.toTypedArray())
+                val color = when (line.kind) {
+                    LogKind.COMMAND, LogKind.INFO, LogKind.HINT -> colors.onSurface
+                    LogKind.SUCCESS -> StatusGreen
+                    LogKind.WARNING -> colors.error
+                    LogKind.ERROR -> StatusRed
+                }
+                // The marker sits in its own column, so wrapped lines stay indented under the text.
+                Row {
+                    Text(
+                        text = when (line.kind) {
+                            LogKind.COMMAND -> "$"
+                            LogKind.SUCCESS -> "✓"
+                            LogKind.WARNING -> "!"
+                            LogKind.ERROR -> "✗"
+                            LogKind.INFO, LogKind.HINT -> "i"
+                        },
+                        modifier = Modifier.width(TERMINAL_MARKER_WIDTH),
+                        style = textStyle,
+                        color = color,
+                    )
+                    Text(text = text, style = textStyle, color = color)
+                }
+            }
+            item {
+                Text(
+                    text = "_",
+                    modifier = Modifier.alpha(cursorAlpha),
+                    style = textStyle,
+                    color = colors.onSurfaceVariant,
                 )
             }
+        }
+    }
+}
 
-            Text(
-                text = when (state) {
-                    RebootUiState.Idle -> if (adbReady) stringResource(R.string.status_ready) else ""
-                    RebootUiState.Connecting -> stringResource(R.string.status_connecting)
-                    is RebootUiState.Rebooting -> stringResource(state.mode.labelRes) + "…"
-                    is RebootUiState.Failed ->
-                        if (state.messageArg != null) {
-                            stringResource(state.messageRes, state.messageArg)
-                        } else {
-                            stringResource(state.messageRes)
-                        }
-                },
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (state is RebootUiState.Failed) {
-                    MaterialTheme.colorScheme.error
-                } else {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                },
-                textAlign = TextAlign.Center,
-            )
-
-            // Only for the state this content shows, not for one that is fading out.
-            if (showDeveloperSettings && state == uiState) {
-                Spacer(Modifier.height(4.dp))
-                DeveloperSettingsButton(onClick = onOpenDeveloperSettings)
-            }
+/** The way to the developer options, below the terminal, only when ADB was found switched off. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun DeveloperSettings(visible: Boolean, onClick: () -> Unit) {
+    val motion = MaterialTheme.motionScheme
+    AnimatedVisibility(
+        visible = visible,
+        enter = fadeIn(motion.defaultEffectsSpec()) + expandVertically(motion.defaultSpatialSpec()),
+        exit = fadeOut(motion.fastEffectsSpec()) + shrinkVertically(motion.fastSpatialSpec()),
+    ) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Spacer(Modifier.height(14.dp))
+            DeveloperSettingsButton(onClick = onClick)
         }
     }
 }

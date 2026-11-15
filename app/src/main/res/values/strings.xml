@@ -14,8 +14,6 @@
     <string name="first_reboot_to_coreelec_desc">When CoreELEC is started for the first time or after an update of the Android system.</string>
     <string name="reboot_to_coreelec">Normal reboot</string>
     <string name="reboot_to_coreelec_desc">For every later start of CoreELEC, once the first reboot has been done.</string>
-    <string name="status_connecting">Connecting to ADB… Confirm the debugging prompt if it appears.</string>
-    <string name="status_ready">Ready to reboot</string>
     <string name="update_available">Update available: version %1$s</string>
     <string name="update_downloading">Downloading update…</string>
     <string name="update_downloading_percent">Downloading update… %1$d%%</string>
@@ -23,4 +21,14 @@
     <string name="update_installing">Starting installation…</string>
     <string name="update_press_to_install">Press OK to download and install</string>
     <string name="open_developer_settings">Developer options</string>
+    <string name="log_connected">Connected</string>
+    <string name="log_authenticating">Authenticating…</string>
+    <string name="log_prompt_shown">Debugging prompt shown, please confirm</string>
+    <string name="log_authorized">Authorized</string>
+    <string name="log_command_sent">Command sent, the device is restarting…</string>
+    <string name="log_not_authorized">Access not allowed</string>
+    <string name="log_no_reboot">The device did not restart</string>
+    <string name="log_unreachable">Port %1$d not reachable</string>
+    <string name="log_hint_enable_debugging">Enable USB debugging in the developer options</string>
+    <string name="log_hint_confirm_prompt">Confirm the debugging prompt and try again</string>
 </resources>

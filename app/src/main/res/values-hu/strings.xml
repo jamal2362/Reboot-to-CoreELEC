@@ -14,8 +14,6 @@
     <string name="first_reboot_to_coreelec_desc">A CoreELEC első indításakor vagy az Android rendszer frissítése után.</string>
     <string name="reboot_to_coreelec">Normál újraindítás</string>
     <string name="reboot_to_coreelec_desc">A CoreELEC minden további indításához, miután az első újraindítás egyszer megtörtént.</string>
-    <string name="status_connecting">Csatlakozás az ADB-hez… Erősítse meg a hibakeresési kérést, ha megjelenik.</string>
-    <string name="status_ready">Újraindításra kész</string>
     <string name="update_available">Frissítés érhető el: %1$s verzió</string>
     <string name="update_downloading">Frissítés letöltése…</string>
     <string name="update_downloading_percent">Frissítés letöltése… %1$d%%</string>
@@ -23,4 +21,14 @@
     <string name="update_installing">Telepítés indítása…</string>
     <string name="update_press_to_install">Nyomja meg az OK gombot a letöltéshez és telepítéshez</string>
     <string name="open_developer_settings">Fejlesztői beállítások</string>
+    <string name="log_connected">Csatlakozva</string>
+    <string name="log_authenticating">Hitelesítés…</string>
+    <string name="log_prompt_shown">Megjelent a hibakeresési kérés, erősítse meg</string>
+    <string name="log_authorized">Engedélyezve</string>
+    <string name="log_command_sent">Parancs elküldve, az eszköz újraindul…</string>
+    <string name="log_not_authorized">A hozzáférés nincs engedélyezve</string>
+    <string name="log_no_reboot">Az eszköz nem indult újra</string>
+    <string name="log_unreachable">A(z) %1$d port nem érhető el</string>
+    <string name="log_hint_enable_debugging">Engedélyezze az USB-hibakeresést a fejlesztői beállításokban</string>
+    <string name="log_hint_confirm_prompt">Erősítse meg a hibakeresési kérést, majd próbálja újra</string>
 </resources>

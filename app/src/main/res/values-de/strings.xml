@@ -14,8 +14,6 @@
     <string name="first_reboot_to_coreelec_desc">Beim ersten Start von CoreELEC oder nach einem Update des Android-Systems.</string>
     <string name="reboot_to_coreelec">Normaler Neustart</string>
     <string name="reboot_to_coreelec_desc">Für jeden weiteren Start von CoreELEC, nachdem der erste Neustart einmal ausgeführt wurde.</string>
-    <string name="status_connecting">Verbinde mit ADB… Bestätige die Debugging-Abfrage, falls sie erscheint.</string>
-    <string name="status_ready">Bereit zum Neustart</string>
     <string name="update_available">Update verfügbar: Version %1$s</string>
     <string name="update_downloading">Update wird heruntergeladen…</string>
     <string name="update_downloading_percent">Update wird heruntergeladen… %1$d %%</string>
@@ -23,4 +21,14 @@
     <string name="update_installing">Installation wird gestartet…</string>
     <string name="update_press_to_install">OK drücken zum Herunterladen und Installieren</string>
     <string name="open_developer_settings">Entwickleroptionen</string>
+    <string name="log_connected">Verbunden</string>
+    <string name="log_authenticating">Authentifiziere…</string>
+    <string name="log_prompt_shown">Debugging-Abfrage angezeigt, bitte bestätigen</string>
+    <string name="log_authorized">Autorisiert</string>
+    <string name="log_command_sent">Befehl gesendet, Gerät startet neu…</string>
+    <string name="log_not_authorized">Zugriff nicht erlaubt</string>
+    <string name="log_no_reboot">Gerät wurde nicht neu gestartet</string>
+    <string name="log_unreachable">Port %1$d nicht erreichbar</string>
+    <string name="log_hint_enable_debugging">USB-Debugging in den Entwickleroptionen aktivieren</string>
+    <string name="log_hint_confirm_prompt">Debugging-Abfrage bestätigen und erneut versuchen</string>
 </resources>

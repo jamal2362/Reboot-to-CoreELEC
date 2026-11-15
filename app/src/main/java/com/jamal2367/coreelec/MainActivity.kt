@@ -30,6 +30,7 @@ class MainActivity : ComponentActivity() {
                     updateState = viewModel.updateState,
                     onInstallUpdate = viewModel::installUpdate,
                     onReboot = viewModel::reboot,
+                    log = viewModel.log,
                     developerOptionsEnabled = viewModel.developerOptionsEnabled,
                     onOpenDeveloperSettings = ::openDeveloperSettings,
                 )
