@@ -8,6 +8,7 @@ import com.tananaev.adblib.AdbAuthenticationFailedException
 import com.tananaev.adblib.AdbBase64
 import com.tananaev.adblib.AdbConnection
 import com.tananaev.adblib.AdbCrypto
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.IOException
 import java.net.Inet4Address
@@ -107,6 +108,70 @@ class AdbRebooter(private val keyDir: File) {
         // Still running after the grace period means the command did not reboot the device.
         Thread.sleep(REBOOT_GRACE_MS)
         throw NoRebootException()
+    }
+
+    /**
+     * Connects, authorizes and runs an ADB [service] such as `shell:getprop ro.product.model`,
+     * passing each line of its output to [onOutput] (on the calling thread) until the service
+     * ends. [RebootStep.AUTHORIZED] is reported once the connection is trusted.
+     *
+     * Blocks; an interrupt of the calling thread ends it with [InterruptedException].
+     */
+    @Throws(IOException::class, InterruptedException::class)
+    fun run(service: String, onStep: (RebootStep) -> Unit, onOutput: (String) -> Unit) {
+        val crypto = loadOrCreateCrypto()
+        authRejected = false
+
+        Socket().use { socket ->
+            this.socket = socket
+            socket.connect(InetSocketAddress(ADB_HOST, ADB_PORT), CONNECT_TIMEOUT_MS)
+            onStep(RebootStep.CONNECTED)
+
+            AdbConnection.create(socket, crypto).use { connection ->
+                onStep(RebootStep.AUTHENTICATING)
+                val authorized = try {
+                    connection.connect(AUTH_TIMEOUT_S, TimeUnit.SECONDS, false)
+                } catch (e: IOException) {
+                    if (authRejected) throw NotAuthorizedException()
+                    throw e
+                }
+                if (!authorized || authRejected) throw NotAuthorizedException()
+                onStep(RebootStep.AUTHORIZED)
+
+                val stream = connection.open(service)
+                Log.d(TAG, "Running \"$service\"")
+
+                // Collect raw bytes and cut them at line breaks, so that multi-byte characters
+                // split across two packets still decode correctly.
+                val pending = ByteArrayOutputStream()
+                fun emitLines(flush: Boolean) {
+                    val bytes = pending.toByteArray()
+                    var start = 0
+                    for (i in bytes.indices) {
+                        if (bytes[i] == '\n'.code.toByte()) {
+                            onOutput(String(bytes, start, i - start, Charsets.UTF_8).trimEnd('\r'))
+                            start = i + 1
+                        }
+                    }
+                    if (flush && start < bytes.size) {
+                        onOutput(String(bytes, start, bytes.size - start, Charsets.UTF_8).trimEnd('\r'))
+                        start = bytes.size
+                    }
+                    pending.reset()
+                    pending.write(bytes, start, bytes.size - start)
+                }
+
+                try {
+                    while (!stream.isClosed) {
+                        pending.write(stream.read())
+                        emitLines(flush = false)
+                    }
+                } catch (e: IOException) {
+                    // The service closed its stream: the command has finished.
+                }
+                emitLines(flush = true)
+            }
+        }
     }
 
     /**

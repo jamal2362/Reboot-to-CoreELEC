@@ -1,5 +1,6 @@
 package com.jamal2367.coreelec.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
@@ -21,14 +22,18 @@ import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.exclude
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.ime
+import androidx.compose.foundation.layout.isImeVisible
 import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
@@ -42,6 +47,9 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -55,18 +63,31 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -84,6 +105,12 @@ import com.jamal2367.coreelec.UpdateUiState
 /** Duration of one full turn of the shape behind the logo. */
 private const val LOGO_SHAPE_TURN_MS = 60_000
 private const val TERMINAL_CURSOR_BLINK_MS = 1_000
+
+/** Frames to wait for the command input line to take focus after OK. */
+private const val FOCUS_ATTEMPTS = 10
+
+/** How much of the screen height a TV on-screen keyboard covers, at least. */
+private const val KEYBOARD_SCREEN_SHARE = 0.45f
 
 /** Widest the terminal window gets; the update notice below it matches. */
 private val TERMINAL_MAX_WIDTH = 380.dp
@@ -106,12 +133,17 @@ fun RebootScreen(
     availableUpdate: UpdateInfo?,
     updateState: UpdateUiState,
     onReboot: (RebootMode) -> Unit,
+    onRunCommand: (String) -> Unit,
     log: List<LogLine>,
     onInstallUpdate: () -> Unit,
     developerOptionsEnabled: Boolean,
     onOpenDeveloperSettings: () -> Unit,
 ) {
     val firstAction = remember { FocusRequester() }
+    val terminalFocus = remember { FocusRequester() }
+
+    // Whether the last action came from the terminal: focus then returns there, not to the cards.
+    var terminalInUse by remember { mutableStateOf(false) }
 
     // ADB is off (found at start or by a failed attempt): offer the way to switch it on,
     // as long as the developer options can be opened. An installable update comes first:
@@ -123,8 +155,22 @@ fun RebootScreen(
 
     // Put D-pad focus on the main action at start and whenever the actions become usable again,
     // unless the developer options button is shown: that one takes focus itself.
+    // The terminal only takes commands once ADB is reachable and trusts this app.
+    val terminalEnabled = !uiState.isBusy && adbStatus == AdbStatus.READY
+
+    // ADB stopped being ready (e.g. found off after a command) while the terminal was in use:
+    // it can no longer hold focus, so hand it back to the main action.
+    LaunchedEffect(adbStatus) {
+        if (adbStatus != AdbStatus.READY && terminalInUse && !uiState.isBusy) {
+            terminalInUse = false
+            if (!showDeveloperSettings) firstAction.requestFocus()
+        }
+    }
+
     LaunchedEffect(uiState.isBusy) {
-        if (!uiState.isBusy && !showDeveloperSettings) firstAction.requestFocus()
+        if (!uiState.isBusy && !showDeveloperSettings) {
+            if (terminalInUse && terminalEnabled) terminalFocus.requestFocus() else firstAction.requestFocus()
+        }
     }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
@@ -138,6 +184,12 @@ fun RebootScreen(
             ) {
                 BrandPane(
                     log = log,
+                    terminalEnabled = terminalEnabled,
+                    terminalFocus = terminalFocus,
+                    onRunCommand = { command ->
+                        terminalInUse = true
+                        onRunCommand(command)
+                    },
                     update = availableUpdate,
                     updateState = updateState,
                     onInstallUpdate = onInstallUpdate,
@@ -147,12 +199,15 @@ fun RebootScreen(
                         .fillMaxHeight()
                         .fillMaxWidth(0.42f)
                         .windowInsetsPadding(
-                            WindowInsets.safeDrawing.only(WindowInsetsSides.Start + WindowInsetsSides.Vertical),
+                            WindowInsets.safeDrawing.exclude(WindowInsets.ime).only(WindowInsetsSides.Start + WindowInsetsSides.Vertical),
                         ),
                 )
                 ActionsPane(
                     enabled = !uiState.isBusy,
-                    onReboot = onReboot,
+                    onReboot = { mode ->
+                        terminalInUse = false
+                        onReboot(mode)
+                    },
                     firstAction = firstAction,
                     modifier = Modifier
                         .fillMaxSize()
@@ -161,7 +216,7 @@ fun RebootScreen(
                             RoundedCornerShape(topStart = 20.dp, bottomStart = 20.dp),
                         )
                         .windowInsetsPadding(
-                            WindowInsets.safeDrawing.only(WindowInsetsSides.End + WindowInsetsSides.Vertical),
+                            WindowInsets.safeDrawing.exclude(WindowInsets.ime).only(WindowInsetsSides.End + WindowInsetsSides.Vertical),
                         )
                         .padding(horizontal = 48.dp, vertical = 24.dp),
                 )
@@ -173,7 +228,7 @@ fun RebootScreen(
                 modifier = Modifier
                     .align(Alignment.BottomEnd)
                     .windowInsetsPadding(
-                        WindowInsets.safeDrawing.only(WindowInsetsSides.End + WindowInsetsSides.Bottom),
+                        WindowInsets.safeDrawing.exclude(WindowInsets.ime).only(WindowInsetsSides.End + WindowInsetsSides.Bottom),
                     )
                     .padding(end = 48.dp, bottom = 24.dp),
             )
@@ -291,10 +346,13 @@ private fun AdbStatusLine(status: AdbStatus, deviceIp: String?, modifier: Modifi
     }
 }
 
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalLayoutApi::class)
 @Composable
 private fun BrandPane(
     log: List<LogLine>,
+    terminalEnabled: Boolean,
+    terminalFocus: FocusRequester,
+    onRunCommand: (String) -> Unit,
     update: UpdateInfo?,
     updateState: UpdateUiState,
     onInstallUpdate: () -> Unit,
@@ -304,11 +362,24 @@ private fun BrandPane(
 ) {
     val logoSize = 156.dp
 
+    // While the on-screen keyboard is up (typing a command), the terminal has to end above it.
+    // Some TV keyboards report a height of 0 while showing, so reserve at least the share of the
+    // screen a TV keyboard usually covers.
+    val imeVisible = WindowInsets.isImeVisible
+    val density = LocalDensity.current
+    val imeHeight = with(density) { WindowInsets.ime.getBottom(density).toDp() }
+    val screenHeight = LocalConfiguration.current.screenHeightDp.dp
+    val keyboardRoom by animateDpAsState(
+        targetValue = if (imeVisible) maxOf(imeHeight, screenHeight * KEYBOARD_SCREEN_SHARE) else 0.dp,
+        animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
+        label = "keyboardRoom",
+    )
+
     // Logo and title sit centred between the top of the screen and the terminal; the terminal
     // takes the rest of the height and ends level with the ADB status box in the bottom right
     // corner (both 24 dp above the bottom).
     Column(
-        modifier = modifier.padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
+        modifier = modifier.padding(start = 24.dp, end = 24.dp, bottom = 24.dp + keyboardRoom),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         // The shape behind the logo turns very slowly; the logo itself stays upright.
@@ -318,10 +389,19 @@ private fun BrandPane(
             animationSpec = infiniteRepeatable(tween(LOGO_SHAPE_TURN_MS, easing = LinearEasing)),
             label = "rotation",
         )
+        // While the keyboard is up, logo and title fold away so the terminal keeps some height.
+        val logoAreaHeight by animateDpAsState(
+            // Folded away, it still leaves the usual 24 dp above the terminal.
+            targetValue = if (imeVisible) 24.dp else TERMINAL_TOP,
+            animationSpec = MaterialTheme.motionScheme.defaultSpatialSpec(),
+            label = "logoAreaHeight",
+        )
         Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(TERMINAL_TOP),
+                .height(logoAreaHeight)
+                .clipToBounds()
+                .graphicsLayer { alpha = ((logoAreaHeight - 24.dp) / (TERMINAL_TOP - 24.dp)).coerceIn(0f, 1f) },
             contentAlignment = Alignment.Center,
         ) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
@@ -352,7 +432,13 @@ private fun BrandPane(
             }
         }
 
-        Terminal(log, modifier = Modifier.weight(1f))
+        Terminal(
+            lines = log,
+            enabled = terminalEnabled,
+            focusRequester = terminalFocus,
+            onRunCommand = onRunCommand,
+            modifier = Modifier.weight(1f),
+        )
 
         // Below the terminal, where the developer options button goes as well. Like that button,
         // without the invisible 48 dp touch margin, so its bottom edge lines up with the ADB box.
@@ -375,17 +461,69 @@ private fun BrandPane(
     }
 }
 
-/** A small terminal window: the ADB steps scroll in from the bottom, under a blinking cursor. */
+/**
+ * A small terminal window: the ADB steps scroll in from the bottom, under a "$ _" prompt.
+ * Pressing OK on it opens the prompt for an ADB command of one's own (see [onRunCommand]).
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun Terminal(lines: List<LogLine>, modifier: Modifier = Modifier) {
+private fun Terminal(
+    lines: List<LogLine>,
+    enabled: Boolean,
+    focusRequester: FocusRequester,
+    onRunCommand: (String) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val colors = MaterialTheme.colorScheme
     val listState = rememberLazyListState()
     val textStyle = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace)
 
-    // Keep the newest line (and the cursor after it) in view.
-    LaunchedEffect(lines.size) {
-        listState.animateScrollToItem(lines.size)
+    var hasFocus by remember { mutableStateOf(false) }
+    var editing by remember { mutableStateOf(false) }
+    var input by remember { mutableStateOf("") }
+    val inputFocus = remember { FocusRequester() }
+    var inputHadFocus by remember { mutableStateOf(false) }
+    var editRequest by remember { mutableIntStateOf(0) }
+    val keyboard = LocalSoftwareKeyboardController.current
+
+    fun stopEditing() {
+        editing = false
+        inputHadFocus = false
+        focusRequester.requestFocus()
     }
+
+    fun submit() {
+        val command = input
+        input = ""
+        stopEditing()
+        if (command.isNotBlank()) onRunCommand(command)
+    }
+
+    // OK on the terminal: move into the prompt line and bring up the on-screen keyboard. The
+    // input field only exists from the next frame on, so try for a few frames; if it never
+    // takes focus, leave the input mode instead of getting stuck in it.
+    LaunchedEffect(editRequest) {
+        if (editRequest == 0) return@LaunchedEffect
+        listState.scrollToItem(0)
+        repeat(FOCUS_ATTEMPTS) {
+            withFrameNanos { }
+            if (inputHadFocus) {
+                keyboard?.show()
+                return@LaunchedEffect
+            }
+            runCatching { inputFocus.requestFocus() }
+        }
+        withFrameNanos { }
+        if (inputHadFocus) keyboard?.show() else editing = false
+    }
+
+    // While a command or a reboot runs, no new command can be typed.
+    LaunchedEffect(enabled) {
+        if (!enabled) editing = false
+    }
+
+    // Back leaves the prompt instead of closing the app.
+    BackHandler(enabled = editing) { stopEditing() }
 
     val cursorAlpha by rememberInfiniteTransition(label = "cursor").animateFloat(
         initialValue = 1f,
@@ -395,13 +533,21 @@ private fun Terminal(lines: List<LogLine>, modifier: Modifier = Modifier) {
     )
 
     Surface(
+        onClick = {
+            editing = true
+            editRequest++
+        },
         modifier = Modifier
             .widthIn(max = TERMINAL_MAX_WIDTH)
             .fillMaxWidth()
-            .then(modifier),
+            .then(modifier)
+            .focusRequester(focusRequester)
+            .onFocusChanged { hasFocus = it.hasFocus }
+            .focusScale(hasFocus),
+        enabled = enabled,
         shape = RoundedCornerShape(16.dp),
-        // Same as the background of the actions side on the right.
-        color = colors.background,
+        // Same as the background of the actions side on the right; the cookie colour while focused.
+        color = focusColor(hasFocus, colors.background),
     ) {
         LazyColumn(
             state = listState,
@@ -409,11 +555,61 @@ private fun Terminal(lines: List<LogLine>, modifier: Modifier = Modifier) {
                 .fillMaxSize()
                 .padding(horizontal = 14.dp, vertical = 10.dp),
             userScrollEnabled = false,
+            // Laid out from the bottom: the prompt (item 0) is always in view and composed, also
+            // when the height changes with the keyboard; short logs still start at the top.
+            reverseLayout = true,
+            verticalArrangement = Arrangement.Top,
         ) {
-            items(lines) { line ->
+            // The prompt: "$ _" with a blinking cursor, or the input line after OK.
+            item {
+                Row {
+                    Text(
+                        text = "$",
+                        modifier = Modifier.width(TERMINAL_MARKER_WIDTH),
+                        style = textStyle,
+                        color = colors.onSurface,
+                    )
+                    when {
+                        editing -> BasicTextField(
+                            value = input,
+                            onValueChange = { input = it },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .focusRequester(inputFocus)
+                                .onFocusChanged {
+                                    // Leaving the line with the D-pad ends the input.
+                                    if (it.isFocused) {
+                                        inputHadFocus = true
+                                    } else if (inputHadFocus) {
+                                        inputHadFocus = false
+                                        editing = false
+                                    }
+                                },
+                            singleLine = true,
+                            textStyle = textStyle.copy(color = colors.onSurface),
+                            cursorBrush = SolidColor(colors.onSurface),
+                            keyboardOptions = KeyboardOptions(
+                                capitalization = KeyboardCapitalization.None,
+                                autoCorrectEnabled = false,
+                                keyboardType = KeyboardType.Ascii,
+                                imeAction = ImeAction.Go,
+                            ),
+                            keyboardActions = KeyboardActions(onGo = { submit() }, onDone = { submit() }),
+                        )
+                        else -> Text(
+                            text = "_",
+                            modifier = Modifier.alpha(cursorAlpha),
+                            style = textStyle,
+                            color = colors.onSurface,
+                        )
+                    }
+                }
+            }
+            items(lines.asReversed()) { line ->
                 val text = line.text ?: stringResource(line.textRes, *line.args.toTypedArray())
                 val color = when (line.kind) {
                     LogKind.COMMAND, LogKind.INFO, LogKind.HINT -> colors.onSurface
+                    LogKind.OUTPUT -> colors.onSurfaceVariant
                     LogKind.SUCCESS -> StatusGreen
                     LogKind.WARNING -> colors.error
                     LogKind.ERROR -> StatusRed
@@ -423,6 +619,7 @@ private fun Terminal(lines: List<LogLine>, modifier: Modifier = Modifier) {
                     Text(
                         text = when (line.kind) {
                             LogKind.COMMAND -> "$"
+                            LogKind.OUTPUT -> ""
                             LogKind.SUCCESS -> "✓"
                             LogKind.WARNING -> "!"
                             LogKind.ERROR -> "✗"
@@ -433,23 +630,6 @@ private fun Terminal(lines: List<LogLine>, modifier: Modifier = Modifier) {
                         color = color,
                     )
                     Text(text = text, style = textStyle, color = color)
-                }
-            }
-            // The prompt waiting for the next command: "$ _" with a blinking cursor.
-            item {
-                Row {
-                    Text(
-                        text = "$",
-                        modifier = Modifier.width(TERMINAL_MARKER_WIDTH),
-                        style = textStyle,
-                        color = colors.onSurface,
-                    )
-                    Text(
-                        text = "_",
-                        modifier = Modifier.alpha(cursorAlpha),
-                        style = textStyle,
-                        color = colors.onSurface,
-                    )
                 }
             }
         }

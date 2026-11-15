@@ -31,4 +31,7 @@
     <string name="log_unreachable">A(z) %1$d port nem érhető el</string>
     <string name="log_hint_enable_debugging">Engedélyezze az USB-hibakeresést a fejlesztői beállításokban</string>
     <string name="log_hint_confirm_prompt">Erősítse meg a hibakeresési kérést, majd próbálja újra</string>
+    <string name="log_no_output">(nincs kimenet)</string>
+    <string name="log_command_timeout">%1$d mp után leállítva</string>
+    <string name="log_interactive_shell">Interaktív shell nem támogatott, adjon meg egy parancsot</string>
 </resources>

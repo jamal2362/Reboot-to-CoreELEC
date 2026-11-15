@@ -31,4 +31,7 @@
     <string name="log_unreachable">Port %1$d nicht erreichbar</string>
     <string name="log_hint_enable_debugging">USB-Debugging in den Entwickleroptionen aktivieren</string>
     <string name="log_hint_confirm_prompt">Debugging-Abfrage bestätigen und erneut versuchen</string>
+    <string name="log_no_output">(keine Ausgabe)</string>
+    <string name="log_command_timeout">Nach %1$d s abgebrochen</string>
+    <string name="log_interactive_shell">Interaktive Shell nicht möglich, Befehl anhängen</string>
 </resources>

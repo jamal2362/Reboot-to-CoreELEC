@@ -18,15 +18,19 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 sealed interface RebootUiState {
     data object Idle : RebootUiState
     data object Connecting : RebootUiState
     data class Rebooting(val mode: RebootMode) : RebootUiState
+
+    /** A command typed into the terminal is running. */
+    data object RunningCommand : RebootUiState
     data class Failed(@param:StringRes val messageRes: Int, val messageArg: Any? = null) : RebootUiState
 
     val isBusy: Boolean
-        get() = this is Connecting || this is Rebooting
+        get() = this is Connecting || this is Rebooting || this is RunningCommand
 }
 
 enum class AdbStatus {
@@ -203,6 +207,84 @@ class RebootViewModel(application: Application) : AndroidViewModel(application) 
         }
     }
 
+    /**
+     * Runs an ADB command typed into the terminal, e.g. `shell getprop ro.product.model`, and
+     * writes its output to the terminal. A leading `adb` is optional; anything that is neither
+     * `shell …` nor `reboot …` runs as a shell command.
+     */
+    fun runCommand(input: String) {
+        if (uiState.isBusy) return
+        val command = input.trim().removePrefix("adb ").trim()
+        if (command.isEmpty() || command == "adb") return
+
+        val (service, shown) = when {
+            command == "shell" -> {
+                // An interactive shell needs a real terminal.
+                log(LogLine.command("adb shell"))
+                log(LogLine(LogKind.ERROR, R.string.log_interactive_shell))
+                return
+            }
+            command.startsWith("shell ") -> command.removePrefix("shell ").trim().let { "shell:$it" to "shell $it" }
+            command == "reboot" || command.startsWith("reboot ") ->
+                command.removePrefix("reboot").trim().let { "reboot:$it" to "reboot $it".trim() }
+            else -> "shell:$command" to "shell $command"
+        }
+
+        uiState = RebootUiState.Connecting
+        promptShown = false
+        promptDismissedJob?.cancel()
+        log(LogLine.command("adb $shown"))
+
+        viewModelScope.launch {
+            uiState = try {
+                var outputLines = 0
+                val finished = withTimeoutOrNull(COMMAND_TIMEOUT_MS) {
+                    runInterruptible(Dispatchers.IO) {
+                        rebooter.run(
+                            service,
+                            onStep = { step ->
+                                if (step == RebootStep.AUTHORIZED) {
+                                    adbStatus = AdbStatus.READY
+                                    uiState = RebootUiState.RunningCommand
+                                }
+                            },
+                            onOutput = { line ->
+                                outputLines++
+                                log(LogLine(LogKind.OUTPUT, text = line))
+                            },
+                        )
+                    }
+                }
+                when {
+                    finished == null -> log(LogLine(LogKind.WARNING, R.string.log_command_timeout, listOf(COMMAND_TIMEOUT_MS / 1000)))
+                    outputLines == 0 -> log(LogLine(LogKind.INFO, R.string.log_no_output))
+                }
+                RebootUiState.Idle
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: NotAuthorizedException) {
+                adbStatus = AdbStatus.NEEDS_AUTH
+                log(LogLine(LogKind.ERROR, R.string.log_not_authorized))
+                log(LogLine(LogKind.HINT, R.string.log_hint_confirm_prompt))
+                RebootUiState.Failed(R.string.error_not_authorized)
+            } catch (e: ConnectException) {
+                log(LogLine(LogKind.ERROR, R.string.log_unreachable, listOf(AdbRebooter.ADB_PORT)))
+                log(LogLine(LogKind.HINT, R.string.log_hint_enable_debugging))
+                RebootUiState.Failed(R.string.error_adb_unreachable, AdbRebooter.ADB_PORT)
+            } catch (e: SocketTimeoutException) {
+                log(LogLine(LogKind.ERROR, R.string.log_unreachable, listOf(AdbRebooter.ADB_PORT)))
+                log(LogLine(LogKind.HINT, R.string.log_hint_enable_debugging))
+                RebootUiState.Failed(R.string.error_adb_unreachable, AdbRebooter.ADB_PORT)
+            } catch (e: Exception) {
+                Log.e(TAG, "Command failed", e)
+                val message = e.localizedMessage ?: e.javaClass.simpleName
+                log(LogLine(LogKind.ERROR, text = message))
+                RebootUiState.Failed(R.string.error_generic, message)
+            }
+            refreshAdbStatus()
+        }
+    }
+
     /** Adds a line to the terminal window; safe to call from any thread, keeps the call order. */
     private fun log(line: LogLine) {
         viewModelScope.launch(Dispatchers.Main) {
@@ -218,7 +300,8 @@ class RebootViewModel(application: Application) : AndroidViewModel(application) 
     private companion object {
         const val TAG = "RebootViewModel"
         const val PROMPT_ANSWER_GRACE_MS = 750L
-        const val MAX_LOG_LINES = 50
+        const val MAX_LOG_LINES = 300
+        const val COMMAND_TIMEOUT_MS = 30_000L
         val ADB_ADDRESS = "127.0.0.1:${AdbRebooter.ADB_PORT}"
     }
 }

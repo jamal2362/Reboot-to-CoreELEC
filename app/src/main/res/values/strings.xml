@@ -31,4 +31,7 @@
     <string name="log_unreachable">Port %1$d not reachable</string>
     <string name="log_hint_enable_debugging">Enable USB debugging in the developer options</string>
     <string name="log_hint_confirm_prompt">Confirm the debugging prompt and try again</string>
+    <string name="log_no_output">(no output)</string>
+    <string name="log_command_timeout">Stopped after %1$d s</string>
+    <string name="log_interactive_shell">Interactive shell not supported, add a command</string>
 </resources>
