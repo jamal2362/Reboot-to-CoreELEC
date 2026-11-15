@@ -175,7 +175,7 @@ private fun UpdateNotice(
         // Same fill and focus outline as the "Normal reboot" card.
         color = colors.surfaceContainerHighest,
         contentColor = colors.onSurface,
-        border = if (focused) BorderStroke(2.dp, colors.onSurface) else null,
+        border = if (focused) BorderStroke(1.5.dp, colors.outline) else null,
         interactionSource = source,
     ) {
         Row(
@@ -313,10 +313,10 @@ private fun Status(uiState: RebootUiState, adbReady: Boolean) {
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (state.isBusy) {
-                // A slightly muted version of the reboot cards' focus outline colour.
+                // Same colour as the focus outline of the cards.
                 LoadingIndicator(
                     modifier = Modifier.size(40.dp),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    color = MaterialTheme.colorScheme.outline,
                 )
             }
 
@@ -407,7 +407,7 @@ private fun RebootAction(
         color = if (primary) colors.surfaceContainerHighest else colors.surfaceContainer,
         contentColor = colors.onSurface,
         // A clearly visible outline for D-pad focus; the default state layer is too subtle on a TV.
-        border = if (focused) BorderStroke(2.dp, colors.onSurface) else null,
+        border = if (focused) BorderStroke(1.5.dp, colors.outline) else null,
         interactionSource = source,
     ) {
         Row(
