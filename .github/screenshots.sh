@@ -10,24 +10,19 @@ adb shell am start -W -n com.jamal2367.coreelec.debug/com.jamal2367.coreelec.Mai
 sleep 8
 shot 1-start
 
-key DPAD_RIGHT
+key DPAD_DOWN
 sleep 2
-shot 2-info-focused
-key DPAD_CENTER
-sleep 3
-shot 3-info-dialog
-key BACK
-sleep 2
+shot 2-second-focused
+key DPAD_UP
+sleep 1
 
-key DPAD_LEFT
-sleep 1
 key DPAD_CENTER
 sleep 1
-shot 4-connecting
+shot 3-connecting
 sleep 4
-shot 5-after-5s
+shot 4-after-5s
 sleep 15
-shot 6-after-20s
+shot 5-after-20s
 
 timeout 20 adb logcat -d -s AdbRebooter:V RebootViewModel:V AndroidRuntime:E > "shots/$name-logcat.txt" || true
 exit 0

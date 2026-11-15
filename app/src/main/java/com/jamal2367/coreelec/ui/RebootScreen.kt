@@ -1,6 +1,7 @@
 package com.jamal2367.coreelec.ui
 
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
@@ -10,52 +11,53 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
+import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.toShape
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.fromHtml
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.jamal2367.coreelec.R
 import com.jamal2367.coreelec.RebootMode
@@ -66,79 +68,106 @@ fun RebootScreen(
     uiState: RebootUiState,
     onReboot: (RebootMode) -> Unit,
 ) {
-    var infoFor by rememberSaveable { mutableStateOf<RebootMode?>(null) }
-    val firstButton = remember { FocusRequester() }
+    val firstAction = remember { FocusRequester() }
 
-    // Put D-pad focus on the main action at start and whenever the buttons become usable again.
+    // Put D-pad focus on the main action at start and whenever the actions become usable again.
     LaunchedEffect(uiState.isBusy) {
-        if (!uiState.isBusy) firstButton.requestFocus()
+        if (!uiState.isBusy) firstAction.requestFocus()
     }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .safeDrawingPadding()
-                .verticalScroll(rememberScrollState())
-                .padding(24.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Logo()
+        BoxWithConstraints {
+            val wide = maxWidth >= 600.dp && maxWidth > maxHeight
+            val brandColor = MaterialTheme.colorScheme.surfaceContainerLow
 
-            Spacer(Modifier.height(20.dp))
-            Text(
-                text = stringResource(R.string.app_name),
-                style = MaterialTheme.typography.headlineMedium,
-                textAlign = TextAlign.Center,
-            )
-
-            Spacer(Modifier.height(12.dp))
-            Status(uiState)
-
-            Spacer(Modifier.height(20.dp))
-            Column(
-                modifier = Modifier.widthIn(max = 360.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                RebootRow(
-                    mode = RebootMode.NORMAL,
-                    primary = true,
-                    enabled = !uiState.isBusy,
-                    onReboot = onReboot,
-                    onInfo = { infoFor = it },
-                    buttonModifier = Modifier.focusRequester(firstButton),
-                )
-                RebootRow(
-                    mode = RebootMode.UPDATE,
-                    primary = false,
-                    enabled = !uiState.isBusy,
-                    onReboot = onReboot,
-                    onInfo = { infoFor = it },
-                )
+            if (wide) {
+                Row(Modifier.fillMaxSize()) {
+                    BrandPane(
+                        uiState = uiState,
+                        logoSize = 170.dp,
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(0.42f)
+                            .background(brandColor)
+                            .windowInsetsPadding(
+                                WindowInsets.safeDrawing.only(WindowInsetsSides.Start + WindowInsetsSides.Vertical),
+                            ),
+                    )
+                    ActionsPane(
+                        enabled = !uiState.isBusy,
+                        onReboot = onReboot,
+                        firstAction = firstAction,
+                        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .windowInsetsPadding(
+                                WindowInsets.safeDrawing.only(WindowInsetsSides.End + WindowInsetsSides.Vertical),
+                            )
+                            .padding(horizontal = 48.dp, vertical = 24.dp),
+                    )
+                }
+            } else {
+                Column(Modifier.fillMaxSize()) {
+                    BrandPane(
+                        uiState = uiState,
+                        logoSize = 120.dp,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .fillMaxHeight(0.44f)
+                            .background(brandColor)
+                            .windowInsetsPadding(
+                                WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
+                            ),
+                    )
+                    ActionsPane(
+                        enabled = !uiState.isBusy,
+                        onReboot = onReboot,
+                        firstAction = firstAction,
+                        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .windowInsetsPadding(
+                                WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal),
+                            )
+                            .padding(20.dp),
+                    )
+                }
             }
         }
-    }
-
-    infoFor?.let { mode ->
-        InfoDialog(mode = mode, onDismiss = { infoFor = null })
     }
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun Logo() {
-    Box(
-        modifier = Modifier
-            .size(120.dp)
-            .background(MaterialTheme.colorScheme.surfaceContainerHigh, MaterialShapes.Cookie9Sided.toShape()),
-        contentAlignment = Alignment.Center,
+private fun BrandPane(uiState: RebootUiState, logoSize: Dp, modifier: Modifier = Modifier) {
+    Column(
+        modifier = modifier.padding(24.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center,
     ) {
-        Image(
-            painter = painterResource(R.drawable.coreelec),
-            contentDescription = null,
-            modifier = Modifier.size(72.dp),
+        Box(
+            modifier = Modifier
+                .size(logoSize)
+                .background(MaterialTheme.colorScheme.surfaceContainerHigh, MaterialShapes.Cookie12Sided.toShape()),
+            contentAlignment = Alignment.Center,
+        ) {
+            Image(
+                painter = painterResource(R.drawable.coreelec),
+                contentDescription = null,
+                modifier = Modifier.size(logoSize * 0.64f),
+            )
+        }
+
+        Spacer(Modifier.height(20.dp))
+        Text(
+            text = stringResource(R.string.app_name),
+            style = MaterialTheme.typography.headlineSmall,
+            fontWeight = FontWeight.SemiBold,
+            textAlign = TextAlign.Center,
         )
+
+        Spacer(Modifier.height(10.dp))
+        Status(uiState)
     }
 }
 
@@ -152,150 +181,140 @@ private fun Status(uiState: RebootUiState) {
 
     AnimatedContent(
         targetState = uiState,
-        modifier = Modifier.heightIn(min = 72.dp),
         transitionSpec = { enter togetherWith exit },
         contentAlignment = Alignment.Center,
         label = "status",
     ) { state ->
-        Row(
-            modifier = Modifier.widthIn(max = 480.dp),
-            horizontalArrangement = Arrangement.spacedBy(12.dp, Alignment.CenterHorizontally),
-            verticalAlignment = Alignment.CenterVertically,
+        Column(
+            modifier = Modifier.widthIn(max = 320.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (state.isBusy) {
-                LoadingIndicator(modifier = Modifier.size(48.dp))
+                LoadingIndicator(modifier = Modifier.size(40.dp))
             }
 
-            val text = when (state) {
-                RebootUiState.Idle -> ""
-                RebootUiState.Connecting -> stringResource(R.string.status_connecting)
-                is RebootUiState.Rebooting -> stringResource(state.mode.labelRes) + "…"
-                is RebootUiState.Failed ->
-                    if (state.messageArg != null) {
-                        stringResource(state.messageRes, state.messageArg)
-                    } else {
-                        stringResource(state.messageRes)
-                    }
-            }
-            if (text.isNotEmpty()) {
-                Text(
-                    text = text,
-                    modifier = Modifier.weight(1f, fill = false),
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = if (state is RebootUiState.Failed) {
-                        MaterialTheme.colorScheme.error
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                    textAlign = if (state.isBusy) TextAlign.Start else TextAlign.Center,
-                )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3ExpressiveApi::class)
-@Composable
-private fun RebootRow(
-    mode: RebootMode,
-    primary: Boolean,
-    enabled: Boolean,
-    onReboot: (RebootMode) -> Unit,
-    onInfo: (RebootMode) -> Unit,
-    buttonModifier: Modifier = Modifier,
-) {
-    val height = 48.dp
-    val colors = MaterialTheme.colorScheme
-    val label = stringResource(mode.labelRes)
-
-    Row(
-        modifier = Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        val buttonSource = remember { MutableInteractionSource() }
-        val modifier = buttonModifier
-            .weight(1f)
-            .heightIn(min = height)
-        val content: @Composable () -> Unit = {
-            Text(text = label, style = ButtonDefaults.textStyleFor(height))
-        }
-
-        if (primary) {
-            FilledTonalButton(
-                onClick = { onReboot(mode) },
-                shapes = ButtonDefaults.shapesFor(height),
-                modifier = modifier,
-                enabled = enabled,
-                colors = ButtonDefaults.filledTonalButtonColors(
-                    containerColor = colors.surfaceContainerHighest,
-                    contentColor = colors.onSurface,
-                ),
-                border = focusBorder(buttonSource),
-                contentPadding = ButtonDefaults.contentPaddingFor(height),
-                interactionSource = buttonSource,
-            ) { content() }
-        } else {
-            OutlinedButton(
-                onClick = { onReboot(mode) },
-                shapes = ButtonDefaults.shapesFor(height),
-                modifier = modifier,
-                enabled = enabled,
-                colors = ButtonDefaults.outlinedButtonColors(contentColor = colors.onSurface),
-                border = focusBorder(buttonSource) ?: BorderStroke(1.dp, colors.outlineVariant),
-                contentPadding = ButtonDefaults.contentPaddingFor(height),
-                interactionSource = buttonSource,
-            ) { content() }
-        }
-
-        val infoSource = remember { MutableInteractionSource() }
-        val infoFocused by infoSource.collectIsFocusedAsState()
-        FilledTonalIconButton(
-            onClick = { onInfo(mode) },
-            shapes = IconButtonDefaults.shapes(),
-            modifier = Modifier.size(height),
-            colors = if (infoFocused) {
-                IconButtonDefaults.filledTonalIconButtonColors(
-                    containerColor = colors.onSurface,
-                    contentColor = colors.surface,
-                )
-            } else {
-                IconButtonDefaults.filledTonalIconButtonColors(
-                    containerColor = colors.surfaceContainer,
-                    contentColor = colors.onSurfaceVariant,
-                )
-            },
-            interactionSource = infoSource,
-        ) {
-            Icon(
-                painter = painterResource(R.drawable.ic_info_24),
-                contentDescription = stringResource(R.string.information) + ": " + label,
-                modifier = Modifier.size(IconButtonDefaults.smallIconSize),
+            Text(
+                text = when (state) {
+                    RebootUiState.Idle -> stringResource(R.string.status_ready)
+                    RebootUiState.Connecting -> stringResource(R.string.status_connecting)
+                    is RebootUiState.Rebooting -> stringResource(state.mode.labelRes) + "…"
+                    is RebootUiState.Failed ->
+                        if (state.messageArg != null) {
+                            stringResource(state.messageRes, state.messageArg)
+                        } else {
+                            stringResource(state.messageRes)
+                        }
+                },
+                style = MaterialTheme.typography.bodyMedium,
+                color = if (state is RebootUiState.Failed) {
+                    MaterialTheme.colorScheme.error
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
+                textAlign = TextAlign.Center,
             )
         }
     }
 }
 
-/** A clearly visible outline for D-pad focus; the default state layer is too subtle on a TV. */
 @Composable
-private fun focusBorder(source: MutableInteractionSource): BorderStroke? {
-    val focused by source.collectIsFocusedAsState()
-    return if (focused) BorderStroke(2.dp, MaterialTheme.colorScheme.onSurface) else null
+private fun ActionsPane(
+    enabled: Boolean,
+    onReboot: (RebootMode) -> Unit,
+    firstAction: FocusRequester,
+    verticalArrangement: Arrangement.Vertical,
+    modifier: Modifier = Modifier,
+) {
+    Column(
+        modifier = modifier.verticalScroll(rememberScrollState()),
+        verticalArrangement = verticalArrangement,
+    ) {
+        Text(
+            text = stringResource(R.string.choose_reboot).uppercase(),
+            modifier = Modifier.padding(start = 4.dp),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.outline,
+        )
+        RebootAction(
+            mode = RebootMode.NORMAL,
+            primary = true,
+            enabled = enabled,
+            onReboot = onReboot,
+            modifier = Modifier.focusRequester(firstAction),
+        )
+        RebootAction(
+            mode = RebootMode.UPDATE,
+            primary = false,
+            enabled = enabled,
+            onReboot = onReboot,
+        )
+    }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun InfoDialog(mode: RebootMode, onDismiss: () -> Unit) {
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        confirmButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(android.R.string.ok))
-            }
-        },
-        icon = {
-            Icon(painter = painterResource(R.drawable.ic_info_24), contentDescription = null)
-        },
-        title = { Text(stringResource(mode.labelRes)) },
-        text = { Text(AnnotatedString.fromHtml(stringResource(mode.infoRes))) },
+private fun RebootAction(
+    mode: RebootMode,
+    primary: Boolean,
+    enabled: Boolean,
+    onReboot: (RebootMode) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val colors = MaterialTheme.colorScheme
+    val source = remember { MutableInteractionSource() }
+    val focused by source.collectIsFocusedAsState()
+    val pressed by source.collectIsPressedAsState()
+    // Expressive shape change: the card tightens its corners while pressed.
+    val corner by animateDpAsState(
+        targetValue = if (pressed) 12.dp else 24.dp,
+        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
+        label = "corner",
     )
+
+    Surface(
+        onClick = { onReboot(mode) },
+        modifier = modifier
+            .fillMaxWidth()
+            .alpha(if (enabled) 1f else 0.5f),
+        enabled = enabled,
+        shape = RoundedCornerShape(corner),
+        color = if (primary) colors.surfaceContainerHighest else colors.surfaceContainer,
+        contentColor = colors.onSurface,
+        // A clearly visible outline for D-pad focus; the default state layer is too subtle on a TV.
+        border = if (focused) BorderStroke(2.dp, colors.onSurface) else null,
+        interactionSource = source,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 20.dp, vertical = 18.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(48.dp)
+                    .background(if (primary) CoreElecRed else colors.surfaceContainerHigh, CircleShape),
+                contentAlignment = Alignment.Center,
+            ) {
+                Icon(
+                    painter = painterResource(mode.iconRes),
+                    contentDescription = null,
+                    tint = if (primary) Color.White else colors.onSurfaceVariant,
+                )
+            }
+
+            Spacer(Modifier.width(18.dp))
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    text = stringResource(mode.labelRes),
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    text = stringResource(mode.descriptionRes),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = colors.onSurfaceVariant,
+                )
+            }
+        }
+    }
 }

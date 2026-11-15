@@ -2,6 +2,7 @@ package com.jamal2367.coreelec
 
 import android.util.Base64
 import android.util.Log
+import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
 import com.tananaev.adblib.AdbBase64
 import com.tananaev.adblib.AdbConnection
@@ -15,10 +16,21 @@ import java.util.concurrent.TimeUnit
 enum class RebootMode(
     val command: String,
     @param:StringRes val labelRes: Int,
-    @param:StringRes val infoRes: Int,
+    @param:StringRes val descriptionRes: Int,
+    @param:DrawableRes val iconRes: Int,
 ) {
-    NORMAL("shell:reboot", R.string.reboot_to_coreelec, R.string.reboot_to_coreelec_info),
-    UPDATE("shell:reboot update", R.string.first_reboot_to_coreelec, R.string.first_reboot_to_coreelec_info),
+    NORMAL(
+        "shell:reboot",
+        R.string.reboot_to_coreelec,
+        R.string.reboot_to_coreelec_desc,
+        R.drawable.ic_restart_24,
+    ),
+    UPDATE(
+        "shell:reboot update",
+        R.string.first_reboot_to_coreelec,
+        R.string.first_reboot_to_coreelec_desc,
+        R.drawable.ic_first_boot_24,
+    ),
 }
 
 /** The user did not confirm the "Allow USB debugging?" prompt in time. */
