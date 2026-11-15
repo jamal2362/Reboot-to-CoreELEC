@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="adb_status_checking">Prüfe ADB…</string>
+    <string name="adb_status_ready">ADB bereit</string>
+    <string name="adb_status_unreachable">ADB nicht erreichbar</string>
     <string name="app_name">Neustart zu CoreELEC</string>
     <string name="choose_reboot">Neustart wählen</string>
     <string name="enable_usb_debugging_first">Aktiviere zuerst USB-Debugging in den Entwickleroptionen</string>

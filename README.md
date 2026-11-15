@@ -20,8 +20,8 @@ device's own ADB daemon, so no root is required.
 2. On first use, Android asks whether to allow debugging from this device. Tick
    *Always allow* and confirm.
 
-The interface is built with Jetpack Compose and Material 3 Expressive and can be used
-with a remote control as well as by touch.
+The interface is built with Jetpack Compose and Material 3 Expressive and is laid out
+for 16:9 TV screens and remote controls.
 
 If something goes wrong (for example ADB is not reachable), the reason is shown below the
 app title.

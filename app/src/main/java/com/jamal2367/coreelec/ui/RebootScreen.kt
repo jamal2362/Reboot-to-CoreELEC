@@ -14,7 +14,6 @@ import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -57,8 +56,8 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.jamal2367.coreelec.AdbStatus
 import com.jamal2367.coreelec.R
 import com.jamal2367.coreelec.RebootMode
 import com.jamal2367.coreelec.RebootUiState
@@ -66,6 +65,8 @@ import com.jamal2367.coreelec.RebootUiState
 @Composable
 fun RebootScreen(
     uiState: RebootUiState,
+    adbStatus: AdbStatus,
+    deviceIp: String?,
     onReboot: (RebootMode) -> Unit,
 ) {
     val firstAction = remember { FocusRequester() }
@@ -76,70 +77,87 @@ fun RebootScreen(
     }
 
     Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-        BoxWithConstraints {
-            val wide = maxWidth >= 600.dp && maxWidth > maxHeight
-            val brandColor = MaterialTheme.colorScheme.surfaceContainerLow
-
-            if (wide) {
-                Row(Modifier.fillMaxSize()) {
-                    BrandPane(
-                        uiState = uiState,
-                        logoSize = 170.dp,
-                        modifier = Modifier
-                            .fillMaxHeight()
-                            .fillMaxWidth(0.42f)
-                            .background(brandColor)
-                            .windowInsetsPadding(
-                                WindowInsets.safeDrawing.only(WindowInsetsSides.Start + WindowInsetsSides.Vertical),
-                            ),
-                    )
-                    ActionsPane(
-                        enabled = !uiState.isBusy,
-                        onReboot = onReboot,
-                        firstAction = firstAction,
-                        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .windowInsetsPadding(
-                                WindowInsets.safeDrawing.only(WindowInsetsSides.End + WindowInsetsSides.Vertical),
-                            )
-                            .padding(horizontal = 48.dp, vertical = 24.dp),
-                    )
-                }
-            } else {
-                Column(Modifier.fillMaxSize()) {
-                    BrandPane(
-                        uiState = uiState,
-                        logoSize = 120.dp,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .fillMaxHeight(0.44f)
-                            .background(brandColor)
-                            .windowInsetsPadding(
-                                WindowInsets.safeDrawing.only(WindowInsetsSides.Top + WindowInsetsSides.Horizontal),
-                            ),
-                    )
-                    ActionsPane(
-                        enabled = !uiState.isBusy,
-                        onReboot = onReboot,
-                        firstAction = firstAction,
-                        verticalArrangement = Arrangement.spacedBy(12.dp, Alignment.Top),
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .windowInsetsPadding(
-                                WindowInsets.safeDrawing.only(WindowInsetsSides.Bottom + WindowInsetsSides.Horizontal),
-                            )
-                            .padding(20.dp),
-                    )
-                }
+        Box {
+            Row(Modifier.fillMaxSize()) {
+                BrandPane(
+                    uiState = uiState,
+                    adbReady = adbStatus == AdbStatus.READY,
+                    modifier = Modifier
+                        .fillMaxHeight()
+                        .fillMaxWidth(0.42f)
+                        .background(MaterialTheme.colorScheme.surfaceContainerLow)
+                        .windowInsetsPadding(
+                            WindowInsets.safeDrawing.only(WindowInsetsSides.Start + WindowInsetsSides.Vertical),
+                        ),
+                )
+                ActionsPane(
+                    enabled = !uiState.isBusy,
+                    onReboot = onReboot,
+                    firstAction = firstAction,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .windowInsetsPadding(
+                            WindowInsets.safeDrawing.only(WindowInsetsSides.End + WindowInsetsSides.Vertical),
+                        )
+                        .padding(horizontal = 48.dp, vertical = 24.dp),
+                )
             }
+
+            AdbStatusLine(
+                status = adbStatus,
+                deviceIp = deviceIp,
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .windowInsetsPadding(
+                        WindowInsets.safeDrawing.only(WindowInsetsSides.Start + WindowInsetsSides.Bottom),
+                    )
+                    .padding(start = 32.dp, bottom = 24.dp),
+            )
         }
+    }
+}
+
+@Composable
+private fun AdbStatusLine(status: AdbStatus, deviceIp: String?, modifier: Modifier = Modifier) {
+    val colors = MaterialTheme.colorScheme
+    val label = stringResource(
+        when (status) {
+            AdbStatus.CHECKING -> R.string.adb_status_checking
+            AdbStatus.READY -> R.string.adb_status_ready
+            AdbStatus.UNREACHABLE -> R.string.adb_status_unreachable
+        },
+    )
+
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            Modifier
+                .size(8.dp)
+                .background(
+                    color = when (status) {
+                        AdbStatus.CHECKING -> colors.outline
+                        AdbStatus.READY -> StatusGreen
+                        AdbStatus.UNREACHABLE -> colors.error
+                    },
+                    shape = CircleShape,
+                ),
+        )
+        Text(
+            text = if (deviceIp != null) "$label • $deviceIp" else label,
+            style = MaterialTheme.typography.bodySmall,
+            color = colors.onSurfaceVariant,
+        )
     }
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun BrandPane(uiState: RebootUiState, logoSize: Dp, modifier: Modifier = Modifier) {
+private fun BrandPane(uiState: RebootUiState, adbReady: Boolean, modifier: Modifier = Modifier) {
+    val logoSize = 170.dp
+
     Column(
         modifier = modifier.padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -167,13 +185,13 @@ private fun BrandPane(uiState: RebootUiState, logoSize: Dp, modifier: Modifier =
         )
 
         Spacer(Modifier.height(10.dp))
-        Status(uiState)
+        Status(uiState, adbReady)
     }
 }
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun Status(uiState: RebootUiState) {
+private fun Status(uiState: RebootUiState, adbReady: Boolean) {
     val motion = MaterialTheme.motionScheme
     val enter = fadeIn(motion.defaultEffectsSpec()) +
         scaleIn(motion.defaultSpatialSpec(), initialScale = 0.9f)
@@ -196,7 +214,7 @@ private fun Status(uiState: RebootUiState) {
 
             Text(
                 text = when (state) {
-                    RebootUiState.Idle -> stringResource(R.string.status_ready)
+                    RebootUiState.Idle -> if (adbReady) stringResource(R.string.status_ready) else ""
                     RebootUiState.Connecting -> stringResource(R.string.status_connecting)
                     is RebootUiState.Rebooting -> stringResource(state.mode.labelRes) + "…"
                     is RebootUiState.Failed ->
@@ -223,12 +241,11 @@ private fun ActionsPane(
     enabled: Boolean,
     onReboot: (RebootMode) -> Unit,
     firstAction: FocusRequester,
-    verticalArrangement: Arrangement.Vertical,
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier.verticalScroll(rememberScrollState()),
-        verticalArrangement = verticalArrangement,
+        verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
     ) {
         Text(
             text = stringResource(R.string.choose_reboot).uppercase(),

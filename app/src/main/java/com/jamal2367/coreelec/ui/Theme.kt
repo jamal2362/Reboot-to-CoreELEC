@@ -10,7 +10,9 @@ import androidx.compose.ui.graphics.Color
 /** The red of the CoreELEC logo. */
 val CoreElecRed = Color(0xFFE30613)
 
-// Always dark: the app is mainly used on TV boxes. Tones are derived from the CoreELEC red.
+val StatusGreen = Color(0xFF6DD58C)
+
+// Always dark: the app is made for TV boxes. Tones are derived from the CoreELEC red.
 private val ColorScheme = darkColorScheme(
     primary = Color(0xFFFFB4AB),
     onPrimary = Color(0xFF690005),

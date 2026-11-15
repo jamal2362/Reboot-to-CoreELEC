@@ -14,6 +14,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runInterruptible
+import kotlinx.coroutines.withContext
 
 sealed interface RebootUiState {
     data object Idle : RebootUiState
@@ -25,12 +26,31 @@ sealed interface RebootUiState {
         get() = this is Connecting || this is Rebooting
 }
 
+enum class AdbStatus { CHECKING, READY, UNREACHABLE }
+
 class RebootViewModel(application: Application) : AndroidViewModel(application) {
 
     private val rebooter = AdbRebooter(application.filesDir)
 
     var uiState: RebootUiState by mutableStateOf(RebootUiState.Idle)
         private set
+
+    var adbStatus: AdbStatus by mutableStateOf(AdbStatus.CHECKING)
+        private set
+
+    var deviceIp: String? by mutableStateOf(null)
+        private set
+
+    /** Checks whether the local ADB daemon is reachable and looks up the device's IP address. */
+    fun refreshAdbStatus() {
+        viewModelScope.launch {
+            val (ip, reachable) = withContext(Dispatchers.IO) {
+                AdbRebooter.localIpAddress() to rebooter.isReachable()
+            }
+            deviceIp = ip
+            adbStatus = if (reachable) AdbStatus.READY else AdbStatus.UNREACHABLE
+        }
+    }
 
     fun reboot(mode: RebootMode) {
         if (uiState.isBusy) return
@@ -55,6 +75,7 @@ class RebootViewModel(application: Application) : AndroidViewModel(application) 
                 Log.e(TAG, "Reboot failed", e)
                 RebootUiState.Failed(R.string.error_generic, e.localizedMessage ?: e.javaClass.simpleName)
             }
+            refreshAdbStatus()
         }
     }
 

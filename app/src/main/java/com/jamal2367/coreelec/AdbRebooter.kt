@@ -9,8 +9,11 @@ import com.tananaev.adblib.AdbConnection
 import com.tananaev.adblib.AdbCrypto
 import java.io.File
 import java.io.IOException
+import java.net.Inet4Address
 import java.net.InetSocketAddress
+import java.net.NetworkInterface
 import java.net.Socket
+import java.net.SocketException
 import java.util.concurrent.TimeUnit
 
 enum class RebootMode(
@@ -89,6 +92,16 @@ class AdbRebooter(private val keyDir: File) {
         throw NoRebootException()
     }
 
+    /** Whether the local ADB daemon accepts TCP connections. */
+    fun isReachable(): Boolean {
+        return try {
+            Socket().use { it.connect(InetSocketAddress(ADB_HOST, ADB_PORT), PROBE_TIMEOUT_MS) }
+            true
+        } catch (e: IOException) {
+            false
+        }
+    }
+
     /** Aborts a running [reboot] call. */
     fun close() {
         try {
@@ -121,10 +134,29 @@ class AdbRebooter(private val keyDir: File) {
         private const val TAG = "AdbRebooter"
         private const val ADB_HOST = "127.0.0.1"
         private const val CONNECT_TIMEOUT_MS = 5_000
+        private const val PROBE_TIMEOUT_MS = 2_000
         private const val AUTH_TIMEOUT_S = 60L
         private const val STATUS_DELAY_MS = 1_500L
         private const val REBOOT_GRACE_MS = 10_000L
         private const val PUBLIC_KEY_NAME = "public.key"
         private const val PRIVATE_KEY_NAME = "private.key"
+
+        /** The device's IPv4 address in the local network, or null without a network connection. */
+        fun localIpAddress(): String? {
+            return try {
+                NetworkInterface.getNetworkInterfaces().asSequence()
+                    .filter { it.isUp && !it.isLoopback }
+                    // Wired and Wi-Fi interfaces first, so that VPN tunnels do not win.
+                    .sortedBy { iface -> PREFERRED_INTERFACES.indexOfFirst { iface.name.startsWith(it) }.let { if (it < 0) Int.MAX_VALUE else it } }
+                    .flatMap { it.inetAddresses.asSequence() }
+                    .filterIsInstance<Inet4Address>()
+                    .firstOrNull { it.isSiteLocalAddress }
+                    ?.hostAddress
+            } catch (e: SocketException) {
+                null
+            }
+        }
+
+        private val PREFERRED_INTERFACES = listOf("eth", "wlan")
     }
 }

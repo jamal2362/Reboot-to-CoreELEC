@@ -32,10 +32,18 @@ class MainActivity : ComponentActivity() {
             AppTheme {
                 RebootScreen(
                     uiState = viewModel.uiState,
+                    adbStatus = viewModel.adbStatus,
+                    deviceIp = viewModel.deviceIp,
                     onReboot = viewModel::reboot,
                 )
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // The user may have changed the debugging settings in the meantime.
+        viewModel.refreshAdbStatus()
     }
 
     private fun openDeveloperSettings() {

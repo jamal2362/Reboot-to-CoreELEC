@@ -1,5 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="adb_status_checking">Checking ADB…</string>
+    <string name="adb_status_ready">ADB ready</string>
+    <string name="adb_status_unreachable">ADB not reachable</string>
     <string name="app_name">Reboot to CoreELEC</string>
     <string name="choose_reboot">Choose reboot</string>
     <string name="enable_usb_debugging_first">Enable USB debugging first in the developer options</string>
