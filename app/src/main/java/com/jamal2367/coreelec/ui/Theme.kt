@@ -1,14 +1,16 @@
 package com.jamal2367.coreelec.ui
 
-import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material3.LocalRippleConfiguration
+import androidx.compose.material3.LocalRippleThemeConfiguration
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MotionScheme
 import androidx.compose.material3.RippleConfiguration
+import androidx.compose.material3.RippleThemeConfiguration
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.unit.dp
 
 /** The red of the CoreELEC logo. */
 val CoreELECRed = Color(0xFFE30613)
@@ -17,7 +19,7 @@ val StatusGreen = Color(0xFF6DD58C)
 
 val StatusRed = Color(0xFFF2564B)
 
-/** Fill of a focused button or card: the colour of the cookie shape behind the logo (surfaceContainerHigh). */
+/** Fill of a focused button or card: the color of the cookie shape behind the logo (surfaceContainerHigh). */
 val FocusContainer = Color(0xFF2A2D3C)
 
 // Always dark: the app is made for TV boxes. Tones are derived from the CoreELEC red.
@@ -59,17 +61,30 @@ fun AppTheme(content: @Composable () -> Unit) {
         colorScheme = ColorScheme,
         motionScheme = MotionScheme.expressive(),
     ) {
-        CompositionLocalProvider(LocalRippleConfiguration provides NoFocusOverlay, content = content)
+        CompositionLocalProvider(
+            LocalRippleThemeConfiguration provides RingFocusTheme,
+            LocalRippleConfiguration provides InvisibleFocusRing,
+            content = content,
+        )
     }
 }
 
 // Focus is shown by the buttons themselves (lighter fill and a slight scale, see FocusContainer),
-// so Material's translucent focus overlay is switched off: the focus colour shows exactly as defined.
-private val NoFocusOverlay = RippleConfiguration(
-    rippleAlpha = RippleAlpha(
-        draggedAlpha = 0.16f,
-        focusedAlpha = 0f,
-        hoveredAlpha = 0.08f,
-        pressedAlpha = 0.10f,
+// so Material's own focus indication is hidden: the focus color shows exactly as defined.
+// In the inset ring mode Material draws no translucent focus overlay, only the ring; the ring is
+// made 0 dp wide and transparent. Press feedback stays as it is.
+private val RingFocusTheme = RippleThemeConfiguration(
+    RippleThemeConfiguration.Focus.InsetRing(
+        outerStrokeInset = 0.dp,
+        outerStrokeWidth = 0.dp,
+        innerStrokeInset = 0.dp,
+        innerStrokeWidth = 0.dp,
+    ),
+)
+
+private val InvisibleFocusRing = RippleConfiguration(
+    focus = RippleConfiguration.Focus.InsetRing(
+        outerStrokeColor = Color.Transparent,
+        innerStrokeColor = Color.Transparent,
     ),
 )
