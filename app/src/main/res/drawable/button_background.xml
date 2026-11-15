@@ -1,12 +1,25 @@
 <ripple xmlns:android="http://schemas.android.com/apk/res/android"
-    android:color="#464B65">
+    android:color="@color/button_stroke">
     <item>
-        <shape android:shape="rectangle">
-            <solid android:color="#20222F" />
-            <corners android:radius="24dp" />
-            <stroke
-                android:width="2dp"
-                android:color="#464B65" />
-        </shape>
+        <selector>
+            <item android:state_focused="true">
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/button_fill_focused" />
+                    <corners android:radius="24dp" />
+                    <stroke
+                        android:width="3dp"
+                        android:color="@color/button_stroke_focused" />
+                </shape>
+            </item>
+            <item>
+                <shape android:shape="rectangle">
+                    <solid android:color="@color/button_fill" />
+                    <corners android:radius="24dp" />
+                    <stroke
+                        android:width="2dp"
+                        android:color="@color/button_stroke" />
+                </shape>
+            </item>
+        </selector>
     </item>
 </ripple>

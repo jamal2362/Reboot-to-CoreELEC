@@ -8,7 +8,7 @@
     <ImageView
         android:layout_width="64dp"
         android:layout_height="64dp"
-        android:background="@drawable/coreelec"
+        android:src="@drawable/coreelec"
         android:contentDescription="@null" />
 
     <TextView
@@ -16,19 +16,21 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="10dp"
         android:text="@string/app_name"
-        android:textColor="#ECECEC"
+        android:textColor="@color/text_primary"
         android:textSize="20sp"
         android:textStyle="bold" />
 
     <TextView
-        android:id="@+id/ip"
+        android:id="@+id/status"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_marginHorizontal="24dp"
         android:layout_marginTop="10dp"
-        android:text="@string/ip"
-        android:textColor="#ECECEC"
-        android:textSize="20sp"
-        android:textStyle="bold" />
+        android:gravity="center"
+        android:maxWidth="420dp"
+        android:minLines="2"
+        android:textColor="@color/text_secondary"
+        android:textSize="14sp" />
 
     <LinearLayout
         android:layout_width="wrap_content"
@@ -39,12 +41,13 @@
 
         <Button
             android:id="@+id/btnReboot"
-            android:layout_width="270dp"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
+            android:minWidth="270dp"
             android:background="@drawable/button_background"
             android:text="@string/reboot_to_coreelec"
             android:textAllCaps="true"
-            android:textColor="#ECECEC" />
+            android:textColor="@color/button_text" />
 
         <ImageButton
             android:id="@+id/btnRebootInfo"
@@ -52,7 +55,6 @@
             android:layout_height="46dp"
             android:layout_marginStart="5dp"
             android:background="@drawable/button_background"
-            android:contentDescription="@null"
             android:src="@drawable/ic_info_24" />
 
     </LinearLayout>
@@ -66,12 +68,13 @@
 
         <Button
             android:id="@+id/btnRebootUpdate"
-            android:layout_width="270dp"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
+            android:minWidth="270dp"
             android:background="@drawable/button_background"
             android:text="@string/first_reboot_to_coreelec"
             android:textAllCaps="true"
-            android:textColor="#ECECEC" />
+            android:textColor="@color/button_text" />
 
         <ImageButton
             android:id="@+id/btnRebootUpdateInfo"
@@ -79,7 +82,6 @@
             android:layout_height="46dp"
             android:layout_marginStart="5dp"
             android:background="@drawable/button_background"
-            android:contentDescription="@null"
             android:src="@drawable/ic_info_24" />
 
     </LinearLayout>

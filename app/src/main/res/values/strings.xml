@@ -2,10 +2,14 @@
 <resources>
     <string name="app_name">Reboot to CoreELEC</string>
     <string name="enable_usb_debugging_first">Enable USB debugging first in the developer options</string>
+    <string name="error_adb_unreachable">ADB is not reachable on port %1$d. Enable network debugging (ADB over network) in the developer options and try again.</string>
+    <string name="error_generic">Reboot failed: %1$s</string>
+    <string name="error_no_reboot">The device did not reboot</string>
+    <string name="error_not_authorized">ADB access was not allowed. Confirm the debugging prompt and try again.</string>
     <string name="first_reboot_to_coreelec">First reboot</string>
     <string name="first_reboot_to_coreelec_info">"'"&lt;b>First reboot&lt;/b>"'" must be executed when CoreELEC is started for the first time or after an update of the Android system.</string>
     <string name="information">Information</string>
-    <string name="ip" translatable="false">127.0.0.1</string>
     <string name="reboot_to_coreelec">Normal reboot</string>
     <string name="reboot_to_coreelec_info">After using "'"&lt;b>First reboot&lt;/b>"'", "'"&lt;b>Normal reboot&lt;/b>"'" must be always used to boot to CoreELEC.</string>
+    <string name="status_connecting">Connecting to ADB… Confirm the debugging prompt if it appears.</string>
 </resources>

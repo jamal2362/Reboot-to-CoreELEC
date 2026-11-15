@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="background">#161820</color>
+    <color name="text_primary">#ECECEC</color>
+    <color name="text_secondary">#B4B7C5</color>
+    <color name="text_disabled">#6B6F85</color>
+    <color name="button_fill">#20222F</color>
+    <color name="button_fill_focused">#343850</color>
+    <color name="button_stroke">#464B65</color>
+    <color name="button_stroke_focused">#ECECEC</color>
+</resources>

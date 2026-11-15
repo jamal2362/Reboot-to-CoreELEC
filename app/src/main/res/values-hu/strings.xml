@@ -2,9 +2,14 @@
 <resources>
     <string name="app_name">Újraindítás CoreELEC-el</string>
     <string name="enable_usb_debugging_first">Először engedélyezze az USB hibakeresést a fejlesztői beállításoknál</string>
+    <string name="error_adb_unreachable">Az ADB nem érhető el a(z) %1$d porton. Engedélyezze a hálózati hibakeresést (ADB hálózaton keresztül) a fejlesztői beállításoknál, majd próbálja újra.</string>
+    <string name="error_generic">Az újraindítás sikertelen: %1$s</string>
+    <string name="error_no_reboot">Az eszköz nem indult újra</string>
+    <string name="error_not_authorized">Az ADB-hozzáférés nem lett engedélyezve. Erősítse meg a hibakeresési kérést, majd próbálja újra.</string>
     <string name="first_reboot_to_coreelec">Első újraindítás</string>
     <string name="first_reboot_to_coreelec_info">"'"&lt;b>Első újraindítás&lt;/b>"'" a CoreELEC első indításakor vagy az Android rendszer frissítése után kell végrehajtani.</string>
     <string name="information">Információ</string>
     <string name="reboot_to_coreelec">Normál újraindítás</string>
     <string name="reboot_to_coreelec_info">Az "'"&lt;b>Első újraindítás használata után már mindig &lt;/b>"'", "'"&lt;b>a Normál újraindítás-t&lt;/b>"'" kell használni a CoreELEC rendszer indításához.</string>
+    <string name="status_connecting">Csatlakozás az ADB-hez… Erősítse meg a hibakeresési kérést, ha megjelenik.</string>
 </resources>

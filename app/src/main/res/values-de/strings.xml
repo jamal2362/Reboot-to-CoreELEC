@@ -2,9 +2,14 @@
 <resources>
     <string name="app_name">Neustart zu CoreELEC</string>
     <string name="enable_usb_debugging_first">Aktiviere zuerst USB-Debugging in den Entwickleroptionen</string>
+    <string name="error_adb_unreachable">ADB ist auf Port %1$d nicht erreichbar. Aktiviere Netzwerk-Debugging (ADB über Netzwerk) in den Entwickleroptionen und versuche es erneut.</string>
+    <string name="error_generic">Neustart fehlgeschlagen: %1$s</string>
+    <string name="error_no_reboot">Das Gerät wurde nicht neu gestartet</string>
+    <string name="error_not_authorized">Der ADB-Zugriff wurde nicht erlaubt. Bestätige die Debugging-Abfrage und versuche es erneut.</string>
     <string name="first_reboot_to_coreelec">Erster Neustart</string>
     <string name="first_reboot_to_coreelec_info">"'"&lt;b>Erster Neustart&lt;/b>"'" muss beim ersten Start von CoreELEC oder nach einem Update des Android-Systems ausgeführt werden.</string>
     <string name="information">Information</string>
     <string name="reboot_to_coreelec">Normaler Neustart</string>
     <string name="reboot_to_coreelec_info">Nach dem verwenden von "'"&lt;b>Erster Neustart&lt;/b>"'" muss immer "'"&lt;b>Normaler Neustart&lt;/b>"'" verwendet werden, um nach CoreELEC neu zu starten.</string>
+    <string name="status_connecting">Verbinde mit ADB… Bestätige die Debugging-Abfrage, falls sie erscheint.</string>
 </resources>
