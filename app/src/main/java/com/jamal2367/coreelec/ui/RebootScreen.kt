@@ -304,7 +304,11 @@ private fun Status(uiState: RebootUiState, adbReady: Boolean) {
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             if (state.isBusy) {
-                LoadingIndicator(modifier = Modifier.size(40.dp))
+                // A slightly muted version of the reboot cards' focus outline colour.
+                LoadingIndicator(
+                    modifier = Modifier.size(40.dp),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
 
             Text(
