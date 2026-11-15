@@ -15,7 +15,7 @@ permissions:
 
 jobs:
   screenshots:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 30
     strategy:
       fail-fast: false
@@ -55,7 +55,7 @@ jobs:
           disable-animations: false
           script: .github/screenshots.sh ${{ matrix.name }}
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: screenshots-${{ matrix.name }}
