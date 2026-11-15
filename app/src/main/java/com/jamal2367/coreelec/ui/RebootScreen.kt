@@ -1,9 +1,11 @@
 package com.jamal2367.coreelec.ui
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -11,7 +13,6 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -84,6 +85,9 @@ import com.jamal2367.coreelec.UpdateUiState
 /** Duration of one full turn of the shape behind the logo. */
 private const val LOGO_SHAPE_TURN_MS = 60_000
 private const val TERMINAL_CURSOR_BLINK_MS = 1_000
+
+/** How much a focused button grows. */
+private const val FOCUS_SCALE = 1.03f
 
 /** Where the terminal window starts, measured from the top of the screen. */
 private val TERMINAL_TOP = 339.dp
@@ -205,13 +209,14 @@ private fun UpdateNotice(
 
     Surface(
         onClick = onInstall,
-        modifier = modifier.focusRequester(focusRequester),
+        modifier = modifier
+            .focusRequester(focusRequester)
+            .focusScale(focused),
         enabled = canInstall,
         shape = RoundedCornerShape(20.dp),
-        // Same fill as the "First reboot" card, same focus outline as all buttons.
-        color = colors.surfaceContainer,
+        // Same fill as the "First reboot" card; lighter while focused, like all buttons.
+        color = focusColor(focused, colors.surfaceContainer),
         contentColor = colors.onSurface,
-        border = if (focused) BorderStroke(1.5.dp, FocusOutline) else null,
         interactionSource = source,
     ) {
         Row(
@@ -463,12 +468,13 @@ private fun DeveloperSettingsButton(onClick: () -> Unit) {
 
     Surface(
         onClick = onClick,
-        modifier = Modifier.focusRequester(focusRequester),
+        modifier = Modifier
+            .focusRequester(focusRequester)
+            .focusScale(focused),
         shape = RoundedCornerShape(20.dp),
-        // Same fill as the turning cookie shape behind the logo, same focus outline as all buttons.
-        color = colors.surfaceContainerHigh,
+        // Same fill as the turning cookie shape behind the logo; lighter while focused.
+        color = focusColor(focused, colors.surfaceContainerHigh),
         contentColor = colors.onSurface,
-        border = if (focused) BorderStroke(1.5.dp, FocusOutline) else null,
         interactionSource = source,
     ) {
         Text(
@@ -538,13 +544,12 @@ private fun RebootAction(
         onClick = { onReboot(mode) },
         modifier = modifier
             .fillMaxWidth()
+            .focusScale(focused)
             .alpha(if (enabled) 1f else 0.5f),
         enabled = enabled,
         shape = RoundedCornerShape(corner),
-        color = if (primary) colors.surfaceContainerHighest else colors.surfaceContainer,
+        color = focusColor(focused, colors.surfaceContainer),
         contentColor = colors.onSurface,
-        // A clearly visible outline for D-pad focus; the default state layer is too subtle on a TV.
-        border = if (focused) BorderStroke(1.5.dp, FocusOutline) else null,
         interactionSource = source,
     ) {
         Row(
@@ -580,3 +585,34 @@ private fun RebootAction(
         }
     }
 }
+
+/**
+ * D-pad focus on a TV: the focused button grows a little (like on the Google TV home screen).
+ * Goes together with [focusColor]; there is no outline.
+ */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun Modifier.focusScale(focused: Boolean): Modifier {
+    val scale by animateFloatAsState(
+        targetValue = if (focused) FOCUS_SCALE else 1f,
+        animationSpec = MaterialTheme.motionScheme.fastSpatialSpec(),
+        label = "focusScale",
+    )
+    return graphicsLayer {
+        scaleX = scale
+        scaleY = scale
+    }
+}
+
+/** The fill of a button: [base] normally, the lighter [FocusContainer] while focused. */
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun focusColor(focused: Boolean, base: Color): Color {
+    val color by animateColorAsState(
+        targetValue = if (focused) FocusContainer else base,
+        animationSpec = MaterialTheme.motionScheme.fastEffectsSpec(),
+        label = "focusColor",
+    )
+    return color
+}
+

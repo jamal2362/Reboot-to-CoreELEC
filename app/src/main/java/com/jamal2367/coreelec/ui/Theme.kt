@@ -1,10 +1,14 @@
 package com.jamal2367.coreelec.ui
 
+import androidx.compose.material.ripple.RippleAlpha
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LocalRippleConfiguration
 import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.material3.MotionScheme
+import androidx.compose.material3.RippleConfiguration
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.graphics.Color
 
 /** The red of the CoreELEC logo. */
@@ -14,8 +18,8 @@ val StatusGreen = Color(0xFF6DD58C)
 
 val StatusRed = Color(0xFFF2564B)
 
-/** Focus outline of buttons and cards: a little darker than the theme's outline (#8F92A6). */
-val FocusOutline = Color(0xFF6E7186)
+/** Fill of a focused button or card: clearly lighter than every unfocused fill. */
+val FocusContainer = Color(0xFF424762)
 
 // Always dark: the app is made for TV boxes. Tones are derived from the CoreELEC red.
 private val ColorScheme = darkColorScheme(
@@ -56,6 +60,18 @@ fun AppTheme(content: @Composable () -> Unit) {
     MaterialExpressiveTheme(
         colorScheme = ColorScheme,
         motionScheme = MotionScheme.expressive(),
-        content = content,
-    )
+    ) {
+        CompositionLocalProvider(LocalRippleConfiguration provides NoFocusOverlay, content = content)
+    }
 }
+
+// Focus is shown by the buttons themselves (lighter fill and a slight scale, see FocusContainer),
+// so Material's translucent focus overlay is switched off: the focus colour shows exactly as defined.
+private val NoFocusOverlay = RippleConfiguration(
+    rippleAlpha = RippleAlpha(
+        draggedAlpha = 0.16f,
+        focusedAlpha = 0f,
+        hoveredAlpha = 0.08f,
+        pressedAlpha = 0.10f,
+    ),
+)
