@@ -70,6 +70,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.jamal2367.coreelec.AdbStatus
 import com.jamal2367.coreelec.LogKind
 import com.jamal2367.coreelec.LogLine
@@ -83,6 +84,9 @@ import com.jamal2367.coreelec.UpdateUiState
 /** Duration of one full turn of the shape behind the logo. */
 private const val LOGO_SHAPE_TURN_MS = 60_000
 private const val TERMINAL_CURSOR_BLINK_MS = 1_000
+
+/** Where the terminal window starts, measured from the top of the screen. */
+private val TERMINAL_TOP = 339.dp
 
 /** Column for the line markers ($, ✓, i, …), about two monospace characters wide. */
 private val TERMINAL_MARKER_WIDTH = 16.dp
@@ -298,12 +302,13 @@ private fun BrandPane(
     onOpenDeveloperSettings: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val logoSize = 140.dp
+    val logoSize = 156.dp
 
-    // Logo and title at the top; the terminal takes the rest of the height and ends level
-    // with the ADB status box in the bottom right corner (both 24 dp above the bottom).
+    // Logo and title sit centred between the top of the screen and the terminal; the terminal
+    // takes the rest of the height and ends level with the ADB status box in the bottom right
+    // corner (both 24 dp above the bottom).
     Column(
-        modifier = modifier.padding(start = 24.dp, end = 24.dp, top = 32.dp, bottom = 24.dp),
+        modifier = modifier.padding(start = 24.dp, end = 24.dp, bottom = 24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         // The shape behind the logo turns very slowly; the logo itself stays upright.
@@ -313,29 +318,40 @@ private fun BrandPane(
             animationSpec = infiniteRepeatable(tween(LOGO_SHAPE_TURN_MS, easing = LinearEasing)),
             label = "rotation",
         )
-        Box(modifier = Modifier.size(logoSize), contentAlignment = Alignment.Center) {
-            Box(
-                Modifier
-                    .matchParentSize()
-                    .graphicsLayer { rotationZ = rotation }
-                    .background(MaterialTheme.colorScheme.surfaceContainerHigh, MaterialShapes.Cookie9Sided.toShape()),
-            )
-            Image(
-                painter = painterResource(R.drawable.coreelec),
-                contentDescription = null,
-                modifier = Modifier.size(logoSize * 0.64f),
-            )
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(TERMINAL_TOP),
+            contentAlignment = Alignment.Center,
+        ) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(modifier = Modifier.size(logoSize), contentAlignment = Alignment.Center) {
+                    Box(
+                        Modifier
+                            .matchParentSize()
+                            .graphicsLayer { rotationZ = rotation }
+                            .background(
+                                MaterialTheme.colorScheme.surfaceContainerHigh,
+                                MaterialShapes.Cookie9Sided.toShape(),
+                            ),
+                    )
+                    Image(
+                        painter = painterResource(R.drawable.coreelec),
+                        contentDescription = null,
+                        modifier = Modifier.size(logoSize * 0.64f),
+                    )
+                }
+
+                Spacer(Modifier.height(15.dp))
+                Text(
+                    text = stringResource(R.string.app_name),
+                    style = MaterialTheme.typography.headlineSmall.copy(fontSize = 27.sp, lineHeight = 34.sp),
+                    fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center,
+                )
+            }
         }
 
-        Spacer(Modifier.height(20.dp))
-        Text(
-            text = stringResource(R.string.app_name),
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.SemiBold,
-            textAlign = TextAlign.Center,
-        )
-
-        Spacer(Modifier.height(20.dp))
         Terminal(log, modifier = Modifier.weight(1f))
 
         DeveloperSettings(visible = showDeveloperSettings, onClick = onOpenDeveloperSettings)
