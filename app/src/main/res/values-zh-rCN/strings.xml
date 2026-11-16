@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="adb_status_checking">正在检查 ADB…</string>
+    <string name="adb_status_ready">ADB 已就绪</string>
+    <string name="adb_status_needs_auth">ADB 访问尚未授权</string>
+    <string name="adb_status_unreachable">ADB 无法连接</string>
+    <string name="app_name">重启到 CoreELEC</string>
+    <string name="choose_reboot">选择重启方式</string>
+    <string name="error_adb_unreachable">无法通过端口 %1$d 连接 ADB。请在开发者选项中启用 USB 调试后重试。</string>
+    <string name="error_generic">重启失败：%1$s</string>
+    <string name="error_no_reboot">设备未重启</string>
+    <string name="error_not_authorized">未允许 ADB 访问。请确认调试授权提示后重试。</string>
+    <string name="first_reboot_to_coreelec">首次重启</string>
+    <string name="first_reboot_to_coreelec_desc">首次启动 CoreELEC，或 Android 系统更新后使用。</string>
+    <string name="reboot_to_coreelec">普通重启</string>
+    <string name="reboot_to_coreelec_desc">首次重启完成后，之后每次启动 CoreELEC 时使用。</string>
+    <string name="update_available">有可用更新：版本 %1$s</string>
+    <string name="update_downloading">正在下载更新…</string>
+    <string name="update_downloading_percent">正在下载更新… %1$d%%</string>
+    <string name="update_failed">更新失败：%1$s</string>
+    <string name="update_installing">正在开始安装…</string>
+    <string name="update_press_to_install">按 OK 键下载并安装</string>
+    <string name="open_developer_settings">开发者选项</string>
+    <string name="log_connected">已连接</string>
+    <string name="log_authenticating">正在认证…</string>
+    <string name="log_prompt_shown">已显示调试授权提示，请确认</string>
+    <string name="log_authorized">已授权</string>
+    <string name="log_command_sent">已发送命令，设备正在重启…</string>
+    <string name="log_not_authorized">未允许访问</string>
+    <string name="log_no_reboot">设备未重启</string>
+    <string name="log_unreachable">端口 %1$d 无法连接</string>
+    <string name="log_hint_enable_debugging">请在开发者选项中启用 USB 调试</string>
+    <string name="log_hint_confirm_prompt">请确认调试授权提示后重试</string>
+    <string name="log_no_output">(无输出)</string>
+    <string name="log_command_timeout">%1$d 秒后已停止</string>
+    <string name="log_interactive_shell">不支持交互式 shell，请附加命令</string>
+</resources>
