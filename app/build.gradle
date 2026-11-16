@@ -14,8 +14,8 @@ android {
     defaultConfig {
         applicationId 'com.jamal2367.coreelec'
         minSdk 24
-        versionCode 60
-        versionName '6.0'
+        versionCode 61
+        versionName '6.1'
     }
 
     androidResources {
