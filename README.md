@@ -25,7 +25,7 @@ device's own ADB daemon, so no root is required.
 
 ## Translations
 
-English, German, Hungarian and Simplified Chinese. Further translations are welcome: copy
+English, German, Hungarian, Simplified Chinese and Spanish. Further translations are welcome: copy
 `app/src/main/res/values/strings.xml` into a new `values-<language>` folder and add the
 language to `localeFilters` in `app/build.gradle`.
 

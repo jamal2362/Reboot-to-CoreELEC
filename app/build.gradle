@@ -19,7 +19,7 @@ android {
     }
 
     androidResources {
-        localeFilters += ['en', 'de', 'hu', 'zh-rCN']
+        localeFilters += ['en', 'de', 'hu', 'zh-rCN', 'es']
     }
 
     signingConfigs {
