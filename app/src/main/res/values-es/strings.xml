@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="adb_status_checking">Comprobando ADB…</string>
+    <string name="adb_status_ready">ADB listo</string>
+    <string name="adb_status_needs_auth">Aún no se ha permitido el acceso por ADB</string>
+    <string name="adb_status_unreachable">No se puede conectar con ADB</string>
+    <string name="app_name">Reiniciar en CoreELEC</string>
+    <string name="choose_reboot">Elige cómo reiniciar</string>
+    <string name="error_adb_unreachable">No se puede conectar con ADB en el puerto %1$d. Activa la depuración USB en las opciones para desarrolladores y vuelve a intentarlo.</string>
+    <string name="error_generic">Error al reiniciar: %1$s</string>
+    <string name="error_no_reboot">El dispositivo no se ha reiniciado</string>
+    <string name="error_not_authorized">No se ha permitido el acceso por ADB. Acepta el aviso de depuración y vuelve a intentarlo.</string>
+    <string name="first_reboot_to_coreelec">Primer reinicio</string>
+    <string name="first_reboot_to_coreelec_desc">Cuando se inicia CoreELEC por primera vez o después de actualizar el sistema Android.</string>
+    <string name="reboot_to_coreelec">Reinicio normal</string>
+    <string name="reboot_to_coreelec_desc">Para todos los inicios de CoreELEC posteriores, una vez hecho el primer reinicio.</string>
+    <string name="update_available">Actualización disponible: versión %1$s</string>
+    <string name="update_downloading">Descargando actualización…</string>
+    <string name="update_downloading_percent">Descargando actualización… %1$d%%</string>
+    <string name="update_failed">Error al actualizar: %1$s</string>
+    <string name="update_installing">Iniciando la instalación…</string>
+    <string name="update_press_to_install">Pulsa OK para descargar e instalar</string>
+    <string name="open_developer_settings">Opciones para desarrolladores</string>
+    <string name="log_connected">Conectado</string>
+    <string name="log_authenticating">Autenticando…</string>
+    <string name="log_prompt_shown">Se ha mostrado el aviso de depuración; acéptalo</string>
+    <string name="log_authorized">Autorizado</string>
+    <string name="log_command_sent">Comando enviado, el dispositivo se está reiniciando…</string>
+    <string name="log_not_authorized">Acceso no permitido</string>
+    <string name="log_no_reboot">El dispositivo no se ha reiniciado</string>
+    <string name="log_unreachable">No se puede conectar con el puerto %1$d</string>
+    <string name="log_hint_enable_debugging">Activa la depuración USB en las opciones para desarrolladores</string>
+    <string name="log_hint_confirm_prompt">Acepta el aviso de depuración y vuelve a intentarlo</string>
+    <string name="log_no_output">(sin salida)</string>
+    <string name="log_command_timeout">Detenido tras %1$d s</string>
+    <string name="log_interactive_shell">La shell interactiva no es compatible; añade un comando</string>
+</resources>
